@@ -1,0 +1,44 @@
+/* Style the select box */
+.loginDropdown select {
+  width: 150px; 
+  border-radius: 8px;
+  font-size: 14px;
+  color: #333;
+  appearance: none; /* Remove default arrow */
+  cursor: pointer;
+  
+  background-color: #fff; 
+}
+
+/* Add custom arrow using a pseudo-element */
+.loginDropdown {
+  position: relative;
+  display: inline-block;
+  
+}
+
+.loginDropdown::after {
+  content: "▼";
+  position: absolute;
+  right: 50%;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: #888;
+  font-size: 12px;
+}
+
+/* Style options (limited support) */
+.loginDropdown select option {
+  font-size: 14px;
+  color: #333;
+  border: 1px solid black;
+  padding: 10px;
+}
+
+/* Hover effect on select itself (works) */
+.loginDropdown select:hover {
+    
+  border-color: #d1a427; /* Highlight border on hover */
+   
+}
