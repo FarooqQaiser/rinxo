@@ -75,8 +75,7 @@ export const registerUser = async (req, res) => {
     });
 
     const token = generateEmailToken(user._id);
-
-    const verifyLink = `${process.env.SERVER_URL}/api/auth/verify-email/${token}`;
+    const verifyLink = `${process.env.CLIENT_URL}/verify-email/${token}`;  
 
     await sendEmail({
       to: email,
@@ -91,7 +90,7 @@ export const registerUser = async (req, res) => {
 
     return res.status(201).json({
       success: true,
-      message: "User registered successfully",
+      message: "User registered successfully! Verify Your E-Mail",
     });
   } catch (err) {
     return res.status(500).json({
@@ -102,51 +101,96 @@ export const registerUser = async (req, res) => {
   }
 };
 
+// export const loginUser = async (req, res) => {
+//   try {
+//     const email = req.body.email;
+//     const password = req.body.password;
+
+//     let user = await User.findOne({ email });
+
+//     if (!user) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "User not found",
+//       });
+//     }
+
+//     if (!user.isEmailVerified) {
+//       return res.status(401).json({
+//         success: false,
+//         message: "Email not verified. Please verify your email to login.",
+//       });
+//     }
+
+//     const isMatch = await bcrypt.compare(password, user.password);
+
+//     if (!isMatch) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Invalid password",
+//       });
+//     }
+
+//     const token = setUser(user);
+//     const userRole = user.role;
+
+//     res.cookie("token", token, {
+//       httpOnly: true,
+//       secure: process.env.NODE_ENV === "production",
+//       sameSite: "strict",
+//       maxAge: 24 * 60 * 60 * 1000,
+//     });
+
+//     res.cookie("role", userRole, {
+//       httpOnly: true,
+//       secure: process.env.NODE_ENV === "production",
+//       sameSite: "strict",
+//       maxAge: 24 * 60 * 60 * 1000,
+//     });
+
+//     return res.status(200).json({
+//       success: true,
+//       message: "Login successful",
+//       user: {
+//         email: user.email,
+//         role: user.role,
+//       },
+//     });
+//   } catch (err) {
+//     return res.status(500).json({ message: "Server error" });
+//   }
+// };
+
+
 export const loginUser = async (req, res) => {
   try {
-    const email = req.body.email;
-    const password = req.body.password;
+    const { email, phoneNumber, password } = req.body;
 
-    let user = await User.findOne({ email });
-
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
+    if (!password || (!email && !phoneNumber)) {
+      return res.status(400).json({ success: false, message: "Email or phone and password are required" });
     }
 
-    if (!user.isEmailVerified) {
-      return res.status(401).json({
-        success: false,
-        message: "Email not verified. Please verify your email to login.",
-      });
-    }
+    let user = email ? await User.findOne({ email }) : await User.findOne({ phoneNumber });
+    if (!user) return res.status(404).json({ success: false, message: "User not found" });
+    if (!user.isEmailVerified) return res.status(401).json({ success: false, message: "Email not verified" });
 
     const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) return res.status(400).json({ success: false, message: "Invalid password" });
 
-    if (!isMatch) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid password",
-      });
-    }
-
-    const token = setUser(user);
-    const userRole = user.role;
+    const token = setUser(user); // JWT generation
 
     res.cookie("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
-      maxAge: 24 * 60 * 60 * 1000,
+      maxAge: 24 * 60 * 60 * 1000, // 1 day
     });
 
-    res.cookie("role", userRole, {
+    res.cookie("role", user.role, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
-      maxAge: 24 * 60 * 60 * 1000,
+      maxAge: 24 * 60 * 60 * 1000, // 1 day
     });
 
     return res.status(200).json({
@@ -159,6 +203,23 @@ export const loginUser = async (req, res) => {
       },
     });
   } catch (err) {
+    console.error(err);
     return res.status(500).json({ message: "Server error" });
   }
 };
+
+export const logout = async (req,res) =>{
+  res.clearCookie("token", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+    });
+    res.clearCookie("role", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+    });
+
+    return res.status(200).json({ success: true, message: "Logged out successfully" });
+}
+ 

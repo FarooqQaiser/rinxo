@@ -6,7 +6,7 @@
 import jwt from "jsonwebtoken";
 
 export const protect = (req, res, next) => {
-  let token = req.cookies.token;
+  const token = req.cookies.token;
 
   // if (
   //   req.headers.authorization &&
@@ -16,19 +16,14 @@ export const protect = (req, res, next) => {
   // }
 
   if (!token) {
-    return res.status(401).json({
-      success: false,
-      message: "Not authorized, no token",
-    });
+    return res.status(401).json({ success: false, message: "Not authorized" });
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded;
+    const user = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = user;
     next();
   } catch (err) {
-    res
-      .status(401)
-      .json({ success: false, message: "Token invalid or expired!" });
+    return res.status(401).json({ success: false, message: "Token invalid or expired" });
   }
 };

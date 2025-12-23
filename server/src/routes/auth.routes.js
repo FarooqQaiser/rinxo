@@ -2,10 +2,12 @@ import express from "express";
 import { body } from "express-validator";
 import {
   loginUser,
+  logout,
   registerUser,
   verifyEmail,
 } from "../controllers/auth.controller.js";
 import { validate } from "../middlewares/validate.middleware.js";
+import { protect } from "../middlewares/auth.middlerware.js";
 
 const router = express.Router();
 
@@ -23,9 +25,18 @@ router.get("/verify-email/:token", verifyEmail);
 
 router.post(
   "/login",
-  [body("email").isEmail(), body("password").notEmpty()],
+  [body("password").notEmpty()],
   validate,
   loginUser
 );
+
+router.get("/check", protect, (req, res) => {
+  res.json({ success: true, user: req.user });
+});
+
+
+router.post("/logout", logout);
+
+
 
 export default router;
