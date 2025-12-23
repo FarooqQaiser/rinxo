@@ -1,10 +1,6 @@
 import React from 'react'
 import DashboardLayout from './DashboardLayout'
 
-export default function Dashboard() {
-  return (
-    <>
-        <DashboardLayout role='user'/> 
-    </>
-  )
+export default function Dashboard({ role }) {
+  return <DashboardLayout role={role} />;
 }

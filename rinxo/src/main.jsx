@@ -1,41 +1,46 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import './index.css'
-import  { createBrowserRouter, RouterProvider } from "react-router-dom"
-import Home from './pages/Home.jsx'
-import Login from './pages/Login.jsx'
-import Register from './pages/Register.jsx'  
-import Dashboard from './features/component/dashboard/Dashboard.jsx'
-// import UserDeposit from './features/component/user/payment/UserDeposit.jsx'
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import "./index.css";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
 
-const mainRoute =  createBrowserRouter([
-  {
-    path:"/",
-    element:<Home/>
-  },
-  {
-    path:"/login",
-    element:<Login/>
-  },
-  {
-    path:"/register",
-    element:<Register/>
-  },
-  {
-    path:"/dashboard",
-    element:<Dashboard/>
-  },
-  // {
-  //   path:"/deposit",
-  //   element:<UserDeposit/>
-  // }
- 
+import Home from "./pages/Home.jsx";
+import Login from "./pages/Login.jsx";
+import Register from "./pages/Register.jsx";
+import Dashboard from "./features/component/dashboard/Dashboard.jsx";
+import EmailVerified from "./components/verificationPages/EmailVerified.jsx";
+import { Bounce, ToastContainer } from "react-toastify"; 
+import ProtectedRoute from "./routes/ProtectedRoute.jsx";
 
-  
-])
+const mainRoute = createBrowserRouter([
+  { path: "/", element: <Home /> },
+  { path: "/login", element: <Login /> },
+  { path: "/register", element: <Register /> },
+  { path: "/verify-email/:token", element: <EmailVerified /> },
+  {
+    path: "/dashboard",
+    element: (
+      <ProtectedRoute>
+        <Dashboard />
+      </ProtectedRoute>
+    ),
+  },
+]);
 
-createRoot(document.getElementById('root')).render(
+createRoot(document.getElementById("root")).render(
   <StrictMode>
-    <RouterProvider router={mainRoute}/>
-  </StrictMode>,
-)
+    <RouterProvider router={mainRoute} />
+    <ToastContainer
+      position="top-right"
+      autoClose={5000}
+      hideProgressBar={false}
+      newestOnTop={false}
+      closeOnClick={false}
+      rtl={false}
+      pauseOnFocusLoss
+      draggable
+      pauseOnHover
+      theme="light"
+      transition={Bounce}
+    />
+  </StrictMode>
+);
