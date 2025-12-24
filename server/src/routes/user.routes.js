@@ -20,10 +20,6 @@ router.get("/admin/users", protect, showAllUsers);
 router.delete("/admin/users/:idToDeleteUser", protect, deleteUser);
 router.patch("/admin/users/:idToActivateUser", protect, activateUser);
 router.get("/admin", protect, showloggedInAdminData);
-router.patch(
-  "/admin/:id",
-  // protect,
-  updateLoggedInAdminData
-);
+router.patch("/admin", protect, updateLoggedInAdminData);
 
 export default router;
