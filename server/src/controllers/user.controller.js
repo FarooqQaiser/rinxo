@@ -195,7 +195,7 @@ export const showloggedInAdminData = async (req, res) => {
 
 export const updateLoggedInAdminData = async (req, res) => {
   try {
-    const id = req.params.id;
+    const id = req.user._id;
     // const id = req.user._id;
     const { fullName, phoneNumber, changedPassword } = req.body;
 
