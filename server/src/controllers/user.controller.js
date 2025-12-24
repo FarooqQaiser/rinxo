@@ -1,3 +1,4 @@
+import bcrypt from "bcryptjs";
 import User from "../models/User.model.js";
 
 export const uploadNICImages = async (req, res) => {
@@ -210,7 +211,7 @@ export const updateLoggedInAdminData = async (req, res) => {
     const updateData = {
       fullName,
       phoneNumber,
-      hashedPassword,
+      password: hashedPassword,
     };
 
     const updatedUser = await User.findOneAndUpdate(
