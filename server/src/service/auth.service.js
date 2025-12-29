@@ -19,6 +19,7 @@ export const setUser = (user) => {
       _id: user._id,
       email: user.email,
       role: user.role,
+      status:user.status
     },
     secret
   );

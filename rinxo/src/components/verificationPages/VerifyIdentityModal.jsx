@@ -3,6 +3,7 @@ import { X, UploadCloud } from "lucide-react";
 
 export default function VerifyIdentityModal({
   // isOpen,
+  setActiveSubMenu,
   setModalOpen,
 }) {
   const [frontImage, setFrontImage] = useState(null);
@@ -116,7 +117,8 @@ export default function VerifyIdentityModal({
               Submit
             </button>
             <button
-              onClick={() => setModalOpen(false)}
+              // onClick={() => setModalOpen(false)}
+              onClick={() => setActiveSubMenu("undefined")}
               className="w-full sm:w-auto bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold px-6 py-2 rounded-lg transition"
             >
               Cancel

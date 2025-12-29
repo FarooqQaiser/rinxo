@@ -24,6 +24,20 @@ export const usersData = async () => {
   }
 };
 
+export const specificData = async (userId) => {
+  try { 
+    const response = await API.get(`/user/userData/${userId}`);
+    return response.data || response.json();
+  } catch (error) {
+    throw (
+      error?.response?.data || {
+        success: false,
+        message: "Failed to Fetch User",
+      }
+    );
+  }
+};
+
 export const usersUpdateData = async (id , body) => {
   try {
     const response = await API.patch(`/user/admin/users/${id}`,body);
@@ -33,6 +47,34 @@ export const usersUpdateData = async (id , body) => {
       error?.response?.data || {
         success: false,
         message: "Failed to Update User",
+      }
+    );
+  }
+};
+
+export const adminUpdateProfile = async (id , body) => {
+  try {
+    const response = await API.patch(`/user/admin/update-profile/${id}`,body);
+    return response.data || response.json();
+  } catch (error) {
+    throw (
+      error?.response?.data || {
+        success: false,
+        message: "Failed to Update Admin",
+      }
+    );
+  }
+};
+
+export const adminUpdatePassword = async (id , body) => {
+  try { 
+    const response = await API.patch(`/user/admin/update-password/${id}`,body);
+    return response.data || response.json();
+  } catch (error) {
+    throw (
+      error?.response?.data || {
+        success: false,
+        message: "Failed to Update Admin",
       }
     );
   }

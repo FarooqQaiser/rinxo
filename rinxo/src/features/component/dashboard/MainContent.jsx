@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import { Menu } from "lucide-react";
 import Dashboard from "../admin/Dashboard";
 import UserDashboard from "../user/Dashboard";
@@ -9,7 +9,9 @@ import UserManageFunds from "../user/UserManageFunds";
 import UserDeposit from "../user/payment/UserDeposit";
 import UserWithdraw from "../user/payment/UserWithdraw";
 import VerifyIdentity from "../../../components/verificationPages/VerifyIdentity";
-import { usersData } from "../../../utils/user.utils";
+import AdminSettings from "../admin/AdminSettings";
+import ProtectedRoute from "../../../routes/ProtectedRoute";
+import VerificationRoute from "../../../routes/VerificationRoute";
 
 export default function MainContent({
   sidebarOpen,
@@ -22,30 +24,6 @@ export default function MainContent({
 }) {
   const role = userData.role;
 
-  const [modalOpen, setModalOpen] = useState(false);
-
-  const [showWarning, setShowWarning] = useState(false); // warning popup
-
-  const [users, setUsers] = useState([]);
-
-  useEffect(() => {
-    const fetchUsers = async () => {
-      const data = await usersData();
-      setUsers(data.data);
-    };
-    fetchUsers();
-  }, []);
-  // Show warning popup on page load
-  useEffect(() => {
-    // Only for user role
-    if (role === "user") {
-      const timer = setTimeout(() => {
-        setShowWarning(true);
-      }, 500); // small delay for UX
-      return () => clearTimeout(timer);
-    }
-  }, [role]);
-
   // ✅ Reset sub menu when main menu changes
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -57,12 +35,8 @@ export default function MainContent({
 
   return (
     <>
-      <VerifyIdentity
-        showWarning={showWarning}
-        setShowWarning={setShowWarning}
-        setModalOpen={setModalOpen}
-        modalOpen={modalOpen}
-      />
+      {/* <VerifyIdentity user={userData}  
+      /> */}
 
       {/* Main Content */}
       <main
@@ -89,28 +63,55 @@ export default function MainContent({
         <section className="flex-1 overflow-auto">
           {role === "admin" && (
             <>
-              {activeMenu === "dashboard" && <Dashboard  userData={users}/>}
-              {activeMenu === "users" && (
-                <UserProfile users={users} setUsers={setUsers} />
-              )}
-              {activeMenu === "funds" && <ManageFunds users={users} />}
+              {activeMenu === "dashboard" && <Dashboard />}
+              {activeMenu === "users" && <UserProfile />}
+              {activeMenu === "funds" && <ManageFunds />}
+              {activeMenu === "settings" && <AdminSettings user={userData} />}
             </>
           )}
           {role === "user" && (
             <>
-              {activeMenu === "dashboard" && <UserDashboard />}
+              {/* <VerificationRoute setActiveSubMenu={setActiveSubMenu}> */}
+
+              {/* {activeMenu === "dashboard" && <UserDashboard />} */}
+              {activeMenu === "dashboard" &&
+                {
+                  deposit: (
+                    <VerificationRoute setActiveSubMenu={setActiveSubMenu}>
+                      <UserDeposit setActiveSubMenu={setActiveSubMenu} />
+                    </VerificationRoute>
+                  ),
+                  withdraw: (
+                    <VerificationRoute setActiveSubMenu={setActiveSubMenu}>
+                      <UserWithdraw setActiveSubMenu={setActiveSubMenu} />
+                    </VerificationRoute>
+                    
+                  ),
+                  undefined: (
+                    <UserDashboard setActiveSubMenu={setActiveSubMenu} />
+                  ),
+                }[activeSubMenu]}
               {activeMenu === "settings" && <UserSettings />}
-              {/* {activeMenu === "myFunds" && <UserManageFunds />} */}
+
               {activeMenu === "myFunds" &&
                 {
-                  deposit: <UserDeposit setActiveSubMenu={setActiveSubMenu} />,
+                  deposit: (
+                    <VerificationRoute setActiveSubMenu={setActiveSubMenu}>
+                      <UserDeposit setActiveSubMenu={setActiveSubMenu} />
+                    </VerificationRoute>
+                  ),
                   withdraw: (
-                    <UserWithdraw setActiveSubMenu={setActiveSubMenu} />
+                    <VerificationRoute setActiveSubMenu={setActiveSubMenu}>
+                      <UserWithdraw setActiveSubMenu={setActiveSubMenu} />
+                    </VerificationRoute>
+                    
                   ),
                   undefined: (
                     <UserManageFunds setActiveSubMenu={setActiveSubMenu} />
                   ),
                 }[activeSubMenu]}
+
+              {/* </VerificationRoute> */}
             </>
           )}
         </section>

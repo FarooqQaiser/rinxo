@@ -1,14 +1,28 @@
-import React from 'react'
-
+import React, { useEffect, useState } from "react";
 import VerifyIdentityModal from "./VerifyIdentityModal";
-export default function VerifyIdentity({showWarning,setShowWarning,setModalOpen,modalOpen}) {
-    const handleConfirmVerify = () => {
-    setShowWarning(false); // hide warning
-    setModalOpen(true); // open modal
+
+export default function VerifyIdentity({ user, setActiveSubMenu }) {
+  const [modalOpen, setModalOpen] = useState(false);
+  const [showWarning, setShowWarning] = useState(false);
+
+  // ✅ Only open if inactive
+  useEffect(() => {
+    if (user?.status === "inActive") {
+      const timer = setTimeout(() => {
+        setShowWarning(true);
+      }, 300);
+
+      return () => clearTimeout(timer);
+    }
+  }, [user]);
+
+  const handleConfirmVerify = () => {
+    setShowWarning(false);
+    setModalOpen(true);
   };
+
   return (
     <>
-     {/* Warning Popup */}
       {showWarning && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="bg-white rounded-xl shadow-lg w-full max-w-sm p-6">
@@ -22,13 +36,16 @@ export default function VerifyIdentity({showWarning,setShowWarning,setModalOpen,
             <div className="flex justify-center gap-4">
               <button
                 onClick={handleConfirmVerify}
-                className="bg-yellow-400 hover:bg-yellow-500 text-white font-semibold px-4 py-2 rounded-lg transition"
+                className="bg-yellow-400 hover:bg-yellow-500 text-white font-semibold px-4 py-2 rounded-lg"
               >
                 Confirm
               </button>
               <button
-                onClick={() => setShowWarning(false)}
-                className="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold px-4 py-2 rounded-lg transition"
+                onClick={() => {
+                  setShowWarning(false);
+                  setActiveSubMenu("undefined");
+                }}
+                className="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold px-4 py-2 rounded-lg"
               >
                 Cancel
               </button>
@@ -37,12 +54,12 @@ export default function VerifyIdentity({showWarning,setShowWarning,setModalOpen,
         </div>
       )}
 
-      {/* Verify Identity Modal */}
       {modalOpen && (
         <VerifyIdentityModal
           setModalOpen={setModalOpen}
+          setActiveSubMenu={setActiveSubMenu}
         />
       )}
     </>
-  )
+  );
 }

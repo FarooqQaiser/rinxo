@@ -1,10 +1,22 @@
 import { FileText, Minus, Plus } from "lucide-react";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { usersData } from "../../../utils/user.utils";
 
-export default function ManageFunds({ users }) {
+export default function ManageFunds( ) {
+
+    const [users, setUsers] = useState([]);
+  
+    useEffect(() => {
+      const fetchUsers = async () => {
+        const data = await usersData();
+        setUsers(data.data);
+      };
+      fetchUsers();
+    }, []);
+
   const [currentPage, setCurrentPage] = useState(1);
   const [usersPerPage, setUsersPerPage] = useState(3);
-
+ 
   // Calculate pagination
   const indexOfLastUser = currentPage * usersPerPage;
   const indexOfFirstUser = indexOfLastUser - usersPerPage;
@@ -58,32 +70,37 @@ export default function ManageFunds({ users }) {
             </tr>
           </thead>
           <tbody>
-            {currentUsers.map((user) => (
+            {currentUsers.map((user,index) => (
               <tr
-                key={user.id}
+                key={user._id}
                 className="border-b border-gray-100 hover:bg-gray-50"
               >
                 <td className="py-4 px-4 font-medium text-gray-800">
-                  {user.id}
+                  {index+1}
                 </td>
                 <td className="py-4 px-4 font-medium text-gray-800">
-                  {user.name}
+                  {user.fullName}
                 </td>
                 <td className="py-4 px-4 text-gray-600">{user.email}</td>
                 {/* <td className="py-4 px-4 text-gray-600">{user.phone}</td> */}
                 <td className="py-4 px-4">
                   <span
-                    className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                      user.status === "Active"
-                        ? "bg-green-100 text-green-700"
-                        : "bg-gray-100 text-gray-700"
-                    }`}
-                  >
-                    {user.status}
-                  </span>
+                      className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                        // in your table & modal
+                        user.status === "active"
+                          ? "bg-green-100 text-green-700"
+                          : user.status === "inActive"
+                          ? "bg-gray-100 text-gray-700"
+                          : user.status === "pending"
+                          ? "bg-yellow-100 text-yellow-700"
+                          : "bg-red-100 text-red-700"
+                      }`}
+                    >
+                      {user.status}
+                    </span>
                 </td>
                 <td className="py-4 px-4 text-gray-800 font-semibold">
-                  ${user.balance.toLocaleString()}
+                  ${user.funds.toLocaleString()}
                 </td>
                 <td className="py-4 px-4">
                   <div className="flex gap-2">
