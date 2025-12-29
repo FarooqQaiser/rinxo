@@ -23,9 +23,7 @@ const getPercentageChange = (current, previous) => {
 
 /* ================== STATS ================== */
 export const adminStats = (userData = []) => {
-  const now = new Date();
-
-  console.log(userData)
+  const now = new Date(); 
   // TOTAL USERS
   const totalUsers = userData.length;
 

@@ -93,6 +93,47 @@ export const showAllUsers = async (req, res) => {
   }
 };
 
+export const showSingleUser = async (req, res) => {
+  try {
+    const userId = req.params.userId; 
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized!",
+      });
+    }
+
+    // Ensure requester exists (admin check can be middleware)
+    const user = await User.findOne({
+      _id: userId
+    });
+
+    // const user = await User.findOne({
+    //   _id: userId,
+    //   role: "user",
+    // }).select("-password");
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found!",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "User retrieved successfully!",
+      data: user,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: `Server Error: ${err.message}`,
+    });
+  }
+};
+
+
 export const deleteUser = async (req, res) => {
   try {
     const idToDeleteUser = req.params.idToDeleteUser;
@@ -122,9 +163,6 @@ export const activateUser = async (req, res) => {
   try {
     const id = req.params.idToActivateUser;
     const status = req.body.status;
-
-    console.log(id);
-    console.log(status);
     if (!id) {
       return res.status(400).json({
         success: false,
@@ -193,44 +231,144 @@ export const showloggedInAdminData = async (req, res) => {
   }
 };
 
-export const updateLoggedInAdminData = async (req, res) => {
-  try {
-    const id = req.user._id;
-    // const id = req.user._id;
-    const { fullName, phoneNumber, changedPassword } = req.body;
+// export const updateLoggedInAdminData = async (req, res) => {
+//   try {
+//     const id = req.user._id;
+//     // const id = req.user._id;
+//     const { fullName, phoneNumber, changedPassword } = req.body;
 
-    if (!id || !fullName || !phoneNumber || !changedPassword) {
+//     if (!id || !fullName || !phoneNumber || !changedPassword) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "User ID is required!",
+//       });
+//     }
+
+//     const hashedPassword = await bcrypt.hash(changedPassword, 10);
+
+//     const updateData = {
+//       fullName,
+//       phoneNumber,
+//       password: hashedPassword,
+//     };
+
+//     const updatedUser = await User.findOneAndUpdate(
+//       { _id: id },
+//       { $set: updateData },
+//       { new: true, runValidators: true }
+//     )
+//       .select("fullName")
+//       .select("phoneNumber");
+
+//     return res.status(200).json({
+//       success: true,
+//       message: "Profile updated successfully!",
+//       user: updatedUser,
+//     });
+//   } catch (err) {
+//     return res.status(500).json({
+//       success: false,
+//       message: `Server Error: ${err.message}`,
+//     });
+//   }
+// };
+
+export const updateAdminProfile = async (req, res) => {
+  try {
+    const id  = req.params.id;
+    const { fullName, phoneNumber } = req.body;
+  
+    if (!id) {
       return res.status(400).json({
         success: false,
-        message: "User ID is required!",
+        message: "Admin ID is required",
       });
     }
 
-    const hashedPassword = await bcrypt.hash(changedPassword, 10);
+    const admin = await User.findOne({ _id: id, role: "admin" });
 
-    const updateData = {
-      fullName,
-      phoneNumber,
-      password: hashedPassword,
-    };
+    if (!admin) {
+      return res.status(404).json({
+        success: false,
+        message: "Admin not found",
+      });
+    }
 
-    const updatedUser = await User.findOneAndUpdate(
-      { _id: id },
-      { $set: updateData },
-      { new: true, runValidators: true }
-    )
-      .select("fullName")
-      .select("phoneNumber");
+    const updateData = {};
+
+    if (fullName) updateData.fullName = fullName;
+    if (phoneNumber) updateData.phoneNumber = phoneNumber;
+
+    if (Object.keys(updateData).length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "No changes provided",
+      });
+    }
+
+    await User.updateOne({ _id: id }, { $set: updateData });
 
     return res.status(200).json({
       success: true,
-      message: "Profile updated successfully!",
-      user: updatedUser,
+      message: "Profile updated successfully",
     });
-  } catch (err) {
+  } catch (error) {
     return res.status(500).json({
       success: false,
-      message: `Server Error: ${err.message}`,
+      message: error.message,
+    });
+  }
+};
+
+
+export const updateAdminPassword = async (req, res) => {
+  try {
+    const id = req.params.id;
+    const { currentPassword, newPassword } = req.body; 
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "Current and new password are required",
+      });
+    }
+
+    const admin = await User.findOne({ _id: id, role: "admin" });
+
+    if (!admin) {
+      return res.status(404).json({
+        success: false,
+        message: "Admin not found",
+      });
+    }
+
+    // Check current password
+    const isMatch = await bcrypt.compare(
+      currentPassword,
+      admin.password
+    );
+
+    if (!isMatch) {
+      return res.status(400).json({
+        success: false,
+        message: "Current password is incorrect",
+      });
+    }
+
+    // Hash new password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    admin.password = hashedPassword;
+    await admin.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Password updated successfully",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
     });
   }
 };

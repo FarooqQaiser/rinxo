@@ -1,9 +1,19 @@
 import { Edit, Eye, Plus, Trash2, X } from "lucide-react";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { userDeleteData, usersData, usersUpdateData } from "../../../utils/user.utils";
 import { toast } from "react-toastify";
 
-export default function UserProfile({ users, setUsers }) {
+export default function UserProfile() {
+
+    const [users, setUsers] = useState([]);
+  
+    useEffect(() => {
+      const fetchUsers = async () => {
+        const data = await usersData();
+        setUsers(data.data);
+      };
+      fetchUsers();
+    }, []);
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",

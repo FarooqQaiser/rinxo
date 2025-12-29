@@ -6,8 +6,18 @@ import {
   Send,
 } from "lucide-react"; 
 import { adminStats } from "./config/dashboardStats";
-export default function Dashboard({userData}) {
+import { useEffect, useState } from "react";
+import { usersData } from "../../../utils/user.utils";
+export default function Dashboard() {
+    const [userData, setUsers] = useState([]);
   
+    useEffect(() => {
+      const fetchUsers = async () => {
+        const data = await usersData(); 
+        setUsers(data.data);
+      };
+      fetchUsers();
+    }, []);
   return (
   <>
   
