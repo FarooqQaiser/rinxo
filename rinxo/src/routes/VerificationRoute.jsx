@@ -34,9 +34,9 @@ const VerificationRoute = ({ children, setActiveSubMenu }) => {
   }
 
   // Prevent pending status users to access deposit or withdraw
-  if (user.role === "user" && user.status === "pending") {
-    return <VerifyIdentity user={user} setActiveSubMenu={setActiveSubMenu} />;
-  }
+  // if (user.role === "user" && user.status === "pending") {
+  //   return <VerifyIdentity user={user} setActiveSubMenu={setActiveSubMenu} />;
+  // }
 
   return children;
 };
