@@ -1,27 +1,29 @@
 import { Payment, Transaction, UserBalance } from '../models/payment.models.js';
 import axios from 'axios';
 import crypto from "crypto";
-import User from '../models/User.model.js';
+import User from "../models/User.model.js";
 
 // NOWPayments API configuration
 const NOWPAYMENTS_API_KEY = process.env.NOWPAYMENTS_API_KEY;
-const NOWPAYMENTS_API_URL = 'https://api-sandbox.nowpayments.io/v1';
-const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
-const BACKEND_URL = process.env.BACKEND_URL || 'https://univalent-distractedly-dave.ngrok-free.dev';
+const NOWPAYMENTS_API_URL = "https://api-sandbox.nowpayments.io/v1";
+const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
+const BACKEND_URL =
+  process.env.BACKEND_URL ||
+  "https://univalent-distractedly-dave.ngrok-free.dev";
 
 // Axios instance
 const nowpaymentsRequest = axios.create({
   baseURL: NOWPAYMENTS_API_URL,
   headers: {
-    'x-api-key': NOWPAYMENTS_API_KEY,
-    'Content-Type': 'application/json',
+    "x-api-key": NOWPAYMENTS_API_KEY,
+    "Content-Type": "application/json",
   },
 });
 
 // ================= STATUS =================
 export const getStatus = async (req, res) => {
   try {
-    const response = await nowpaymentsRequest.get('/status');
+    const response = await nowpaymentsRequest.get("/status");
     res.json(response.data);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -31,7 +33,7 @@ export const getStatus = async (req, res) => {
 // ================= CURRENCIES =================
 export const getCurrencies = async (req, res) => {
   try {
-    const response = await nowpaymentsRequest.get('/currencies');
+    const response = await nowpaymentsRequest.get("/currencies");
     res.json(response.data);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -88,25 +90,21 @@ export const estimatePrice = async (req, res) => {
 // ================= CREATE PAYMENT =================
 export const createPayment = async (req, res) => {
   try {
-    const {
-      price_amount,
-      price_currency,
-      pay_currency,
-      order_description,
-    } = req.body;
+    const { price_amount, price_currency, pay_currency, order_description } =
+      req.body;
 
     if (!price_amount || !price_currency || !pay_currency) {
-      return res.status(400).json({ 
-        error: 'Missing required fields',
-        received: { price_amount, price_currency, pay_currency }
+      return res.status(400).json({
+        error: "Missing required fields",
+        received: { price_amount, price_currency, pay_currency },
       });
     }
 
     const parsedAmount = parseFloat(price_amount);
     if (isNaN(parsedAmount) || parsedAmount <= 0) {
-      return res.status(400).json({ 
-        error: 'Invalid price_amount',
-        message: 'Price amount must be a positive number'
+      return res.status(400).json({
+        error: "Invalid price_amount",
+        message: "Price amount must be a positive number",
       });
     }
 
@@ -122,23 +120,26 @@ export const createPayment = async (req, res) => {
       price_currency: price_currency.toLowerCase(),
       pay_currency: pay_currency.toLowerCase(),
       order_id,
-      order_description: order_description || 'Wallet deposit',
+      order_description: order_description || "Wallet deposit",
       ipn_callback_url,
       success_url,
       cancel_url,
     };
 
-    console.log('🔷 Creating payment with NOWPayments:', {
+    console.log("🔷 Creating payment with NOWPayments:", {
       ...nowPaymentsPayload,
-      userId: req.userId
+      userId: req.userId,
     });
 
-    const response = await nowpaymentsRequest.post('/payment', nowPaymentsPayload);
+    const response = await nowpaymentsRequest.post(
+      "/payment",
+      nowPaymentsPayload
+    );
 
-    console.log('✅ Payment created:', {
+    console.log("✅ Payment created:", {
       payment_id: response.data.payment_id,
       order_id,
-      ipn_callback_url
+      ipn_callback_url,
     });
 
     // Save payment to database
@@ -153,10 +154,10 @@ export const createPayment = async (req, res) => {
       pay_address: response.data.pay_address,
       payment_status: response.data.payment_status,
       invoice_id: response.data.invoice_id,
-      metadata: { 
-        success_url, 
+      metadata: {
+        success_url,
         cancel_url,
-        ipn_callback_url 
+        ipn_callback_url,
       },
     });
 
@@ -166,11 +167,11 @@ export const createPayment = async (req, res) => {
     const transaction = new Transaction({
       user_id: req.userId,
       payment_id: response.data.payment_id,
-      type: 'deposit',
+      type: "deposit",
       amount: parsedAmount,
       currency: price_currency,
-      status: 'pending',
-      description: order_description || 'Crypto deposit',
+      status: "pending",
+      description: order_description || "Crypto deposit",
     });
 
     await transaction.save();
@@ -179,12 +180,15 @@ export const createPayment = async (req, res) => {
       ...response.data,
       success_url,
       cancel_url,
-      order_id
+      order_id,
     });
   } catch (err) {
-    console.error('❌ Payment creation error:', err.response?.data || err.message);
+    console.error(
+      "❌ Payment creation error:",
+      err.response?.data || err.message
+    );
     res.status(err.response?.status || 500).json({
-      error: 'Payment creation failed',
+      error: "Payment creation failed",
       message: err.response?.data?.message || err.message,
     });
   }
@@ -201,14 +205,15 @@ export const getPaymentStatus = async (req, res) => {
     });
 
     if (!payment) {
-      return res.status(404).json({ error: 'Payment not found' });
+      return res.status(404).json({ error: "Payment not found" });
     }
 
     const response = await nowpaymentsRequest.get(`/payment/${payment_id}`);
 
     if (response.data.payment_status !== payment.payment_status) {
       payment.payment_status = response.data.payment_status;
-      payment.actually_paid = response.data.actually_paid || payment.actually_paid;
+      payment.actually_paid =
+        response.data.actually_paid || payment.actually_paid;
       payment.updated_at = new Date();
       await payment.save();
     }
@@ -230,18 +235,18 @@ export const getPaymentByOrderId = async (req, res) => {
     const payment = await Payment.findOne({ order_id });
 
     if (!payment) {
-      return res.status(404).json({ error: 'Payment not found' });
+      return res.status(404).json({ error: "Payment not found" });
     }
 
-    const transaction = await Transaction.findOne({ 
-      payment_id: payment.payment_id 
+    const transaction = await Transaction.findOne({
+      payment_id: payment.payment_id,
     });
 
     res.json({
       payment,
       transaction,
       status: payment.payment_status,
-      balance_updated: transaction?.status === 'completed'
+      balance_updated: transaction?.status === "completed",
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -318,7 +323,6 @@ export const getBalance = async (req, res) => {
   }
 };
 
-
 function verifyIPN(req) {
   const sig = req.headers["x-nowpayments-sig"];
   if (!sig) return false;
@@ -335,40 +339,39 @@ function verifyIPN(req) {
 export const ipnCallback = async (req, res) => {
   try {
     const data = req.body;
-    
+
     // ✅ Enhanced logging to track webhook calls
-    console.log('\n' + '='.repeat(60));
-    console.log('🔔 IPN WEBHOOK RECEIVED');
-    console.log('='.repeat(60));
-    console.log('📅 Timestamp:', new Date().toISOString());
-    console.log('📦 Payload:', JSON.stringify(data, null, 2));
-    console.log('🔗 Headers:', JSON.stringify(req.headers, null, 2));
-    console.log('='.repeat(60) + '\n');
+    console.log("\n" + "=".repeat(60));
+    console.log("🔔 IPN WEBHOOK RECEIVED");
+    console.log("=".repeat(60));
+    console.log("📅 Timestamp:", new Date().toISOString());
+    console.log("📦 Payload:", JSON.stringify(data, null, 2));
+    console.log("🔗 Headers:", JSON.stringify(req.headers, null, 2));
+    console.log("=".repeat(60) + "\n");
 
     if (!verifyIPN(req)) {
       console.error("❌ Invalid IPN signature");
       return res.status(401).json({ error: "Invalid signature" });
     }
 
-
     // Validate required fields
     if (!data.payment_id) {
-      console.error('❌ Missing payment_id in webhook data');
-      return res.status(400).json({ error: 'Missing payment_id' });
+      console.error("❌ Missing payment_id in webhook data");
+      return res.status(400).json({ error: "Missing payment_id" });
     }
 
     // Find payment in database
     const payment = await Payment.findOne({ payment_id: data.payment_id });
     if (!payment) {
-      console.error('❌ Payment not found:', data.payment_id);
-      return res.status(404).json({ error: 'Payment not found' });
+      console.error("❌ Payment not found:", data.payment_id);
+      return res.status(404).json({ error: "Payment not found" });
     }
 
-    console.log('✅ Payment found in database:', {
+    console.log("✅ Payment found in database:", {
       payment_id: payment.payment_id,
       order_id: payment.order_id,
       current_status: payment.payment_status,
-      new_status: data.payment_status
+      new_status: data.payment_status,
     });
 
     // Update payment status
@@ -381,31 +384,31 @@ export const ipnCallback = async (req, res) => {
 
     // Handle different payment statuses
     switch (data.payment_status) {
-      case 'finished':
+      case "finished":
         payment.confirmed_at = new Date();
         await updateUserBalance(payment, data);
-        console.log('✅ Payment FINISHED - Balance updated');
+        console.log("✅ Payment FINISHED - Balance updated");
         break;
 
-      case 'partially_paid':
-        console.log('⚠️ Payment PARTIALLY PAID');
-        await updateTransactionStatus(data.payment_id, 'partial');
+      case "partially_paid":
+        console.log("⚠️ Payment PARTIALLY PAID");
+        await updateTransactionStatus(data.payment_id, "partial");
         break;
 
-      case 'failed':
-      case 'expired':
-        console.log('❌ Payment FAILED/EXPIRED');
-        await updateTransactionStatus(data.payment_id, 'failed');
+      case "failed":
+      case "expired":
+        console.log("❌ Payment FAILED/EXPIRED");
+        await updateTransactionStatus(data.payment_id, "failed");
         break;
 
-      case 'refunded':
-        console.log('🔄 Payment REFUNDED');
+      case "refunded":
+        console.log("🔄 Payment REFUNDED");
         await handleRefund(payment);
         break;
 
-      case 'waiting':
-      case 'confirming':
-      case 'sending':
+      case "waiting":
+      case "confirming":
+      case "sending":
         console.log(`⏳ Payment status: ${data.payment_status}`);
         break;
 
@@ -414,29 +417,28 @@ export const ipnCallback = async (req, res) => {
     }
 
     await payment.save();
-    console.log('💾 Payment record updated in database\n');
+    console.log("💾 Payment record updated in database\n");
 
     // ✅ CRITICAL: Always return 200 to acknowledge webhook
-    res.status(200).json({ 
-      success: true, 
-      message: 'Webhook processed successfully',
+    res.status(200).json({
+      success: true,
+      message: "Webhook processed successfully",
       payment_id: data.payment_id,
-      status: data.payment_status
+      status: data.payment_status,
     });
-
   } catch (err) {
-    console.error('\n' + '='.repeat(60));
-    console.error('❌ IPN CALLBACK ERROR');
-    console.error('='.repeat(60));
-    console.error('Error:', err);
-    console.error('Stack:', err.stack);
-    console.error('='.repeat(60) + '\n');
-    
+    console.error("\n" + "=".repeat(60));
+    console.error("❌ IPN CALLBACK ERROR");
+    console.error("=".repeat(60));
+    console.error("Error:", err);
+    console.error("Stack:", err.stack);
+    console.error("=".repeat(60) + "\n");
+
     // Still return 200 to prevent NOWPayments from retrying
-    res.status(200).json({ 
-      success: false, 
-      error: 'Internal error but acknowledged',
-      message: err.message 
+    res.status(200).json({
+      success: false,
+      error: "Internal error but acknowledged",
+      message: err.message,
     });
   }
 };
@@ -445,39 +447,42 @@ export const ipnCallback = async (req, res) => {
 
 async function updateUserBalance(payment, webhookData) {
   try {
-    console.log('💰 Starting balance update...');
-    
+    console.log("💰 Starting balance update...");
+
     const transaction = await Transaction.findOne({
       payment_id: payment.payment_id,
     });
 
     if (!transaction) {
-      console.error('❌ Transaction not found for payment:', payment.payment_id);
+      console.error(
+        "❌ Transaction not found for payment:",
+        payment.payment_id
+      );
       return;
     }
 
     // Prevent double crediting
-    if (transaction.status === 'completed') {
-      console.log('⚠️ Transaction already completed, skipping balance update');
+    if (transaction.status === "completed") {
+      console.log("⚠️ Transaction already completed, skipping balance update");
       return;
     }
 
     let userBalance = await UserBalance.findOne({ user_id: payment.user_id });
 
     if (!userBalance) {
-      userBalance = new UserBalance({ 
-        user_id: payment.user_id, 
-        balance: 0 
+      userBalance = new UserBalance({
+        user_id: payment.user_id,
+        balance: 0,
       });
-      console.log('🆕 Created new balance record');
+      console.log("🆕 Created new balance record");
     }
 
     let userFunds = await User.findOne({ _id: payment.user_id });
     if (!userFunds) {
-      console.log('⚠️ Transaction Failed');
+      console.log("⚠️ Transaction Failed");
       return;
     }
-    transaction.status = 'completed';
+    transaction.status = "completed";
     transaction.balance_before = userBalance.balance;
     transaction.completed_at = new Date();
 
@@ -489,16 +494,15 @@ async function updateUserBalance(payment, webhookData) {
     await userBalance.save();
     await transaction.save();
     await userFunds.save();
-    console.log('✅ Balance updated successfully:', {
+    console.log("✅ Balance updated successfully:", {
       userId: payment.user_id,
       previousBalance: transaction.balance_before,
       addedAmount: payment.price_amount,
       newBalance: userBalance.balance,
-      fundsBalance: userFunds.funds
+      fundsBalance: userFunds.funds,
     });
-
   } catch (err) {
-    console.error('❌ Error updating balance:', err);
+    console.error("❌ Error updating balance:", err);
     throw err;
   }
 }
@@ -506,49 +510,49 @@ async function updateUserBalance(payment, webhookData) {
 async function updateTransactionStatus(payment_id, status) {
   try {
     const transaction = await Transaction.findOne({ payment_id });
-    if (transaction && transaction.status !== 'completed') {
+    if (transaction && transaction.status !== "completed") {
       transaction.status = status;
       transaction.updated_at = new Date();
       await transaction.save();
       console.log(`✅ Transaction status updated to: ${status}`);
     }
   } catch (err) {
-    console.error('❌ Error updating transaction status:', err);
+    console.error("❌ Error updating transaction status:", err);
   }
 }
 
 async function handleRefund(payment) {
   try {
-    console.log('🔄 Processing refund...');
-    
+    console.log("🔄 Processing refund...");
+
     const transaction = await Transaction.findOne({
       payment_id: payment.payment_id,
     });
 
-    if (!transaction || transaction.status !== 'completed') {
-      console.log('⚠️ No completed transaction to refund');
+    if (!transaction || transaction.status !== "completed") {
+      console.log("⚠️ No completed transaction to refund");
       return;
     }
 
     let userBalance = await UserBalance.findOne({ user_id: payment.user_id });
-    
+
     if (userBalance && userBalance.balance >= payment.price_amount) {
       userBalance.balance -= payment.price_amount;
       await userBalance.save();
 
-      transaction.status = 'refunded';
+      transaction.status = "refunded";
       transaction.updated_at = new Date();
       await transaction.save();
 
-      console.log('✅ Refund processed:', {
+      console.log("✅ Refund processed:", {
         userId: payment.user_id,
         refundedAmount: payment.price_amount,
-        newBalance: userBalance.balance
+        newBalance: userBalance.balance,
       });
     } else {
-      console.error('❌ Insufficient balance for refund');
+      console.error("❌ Insufficient balance for refund");
     }
   } catch (err) {
-    console.error('❌ Error handling refund:', err);
+    console.error("❌ Error handling refund:", err);
   }
 }
