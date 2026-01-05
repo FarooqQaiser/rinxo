@@ -1,3 +1,4 @@
 # Environment variables
-./rinxo/.env
-./server/.env
+.env
+.env.*
+.env*
