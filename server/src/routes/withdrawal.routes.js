@@ -6,7 +6,10 @@ import {
   cancelWithdrawal,
   processWithdrawal,
   getWithdrawalStats,
+  updateUserWithdrawalStatus,
 } from "../controllers/withdrawal.controller.js";
+import { protect } from "../middlewares/auth.middlerware.js";
+import Withdrawal from "../models/payment.models.js";
 // import { protect } from "../middlewares/auth.middlerware.js";
 
 const withdrawalRoute = express.Router();
@@ -46,6 +49,7 @@ const withdrawalRoute = express.Router();
 withdrawalRoute.post(
   "/create",
   // authenticateUser,
+  // protect,
   createWithdrawal
 );
 
@@ -86,5 +90,8 @@ withdrawalRoute.post(
   // authenticateAdmin,
   processWithdrawal
 );
+
+// Update status of the use withdraw
+withdrawalRoute.patch("/:withdrawId", protect, updateUserWithdrawalStatus);
 
 export default withdrawalRoute;

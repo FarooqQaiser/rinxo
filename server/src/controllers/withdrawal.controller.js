@@ -8,8 +8,8 @@ import User from "../models/User.model.js";
 // ================= CREATE WITHDRAWAL REQUEST =================
 export const createWithdrawal = async (req, res) => {
   try {
-    const { amount, method, details } = req.body;
-    const userId = req.userId;
+    const { amount, method, details, userId } = req.body;
+    // const userId = req.headers.userId;
 
     // Validate input
     if (!amount || !method || !details) {
@@ -411,5 +411,58 @@ export const getWithdrawalStats = async (req, res) => {
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+};
+
+// ================= UPDATE USER WITHDRAWAL STATUS =================
+export const updateUserWithdrawalStatus = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const withdrawId = req.params.withdrawId;
+    const { status } = req.body;
+
+    if (!userId || !withdrawId) {
+      return res.status(401).json({
+        success: false,
+        message: "Send user and withdraw Id in params!",
+      });
+    }
+
+    const withdrawal = await Withdrawal.findByIdAndUpdate(
+      withdrawId,
+      { $set: { status } },
+      { new: true }
+    );
+
+    if (!withdrawal) {
+      return res.status(404).json({
+        success: false,
+        message: `Withdrawal with id: ${withdrawId} is not found!`,
+      });
+    }
+
+    const transaction = await Transaction.findOneAndUpdate(
+      { payment_id: withdrawal.withdrawal_id },
+      { $set: { status } },
+      { new: true }
+    );
+
+    if (!transaction) {
+      return res.status(404).json({
+        success: false,
+        message: `Transaction with id: ${withdrawId} is not found!`,
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "User's withdrawal status updated successfully!",
+      data: withdrawal,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: `Server Error: ${err}`,
+    });
   }
 };
