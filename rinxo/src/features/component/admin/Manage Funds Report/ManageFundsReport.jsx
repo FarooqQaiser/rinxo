@@ -9,6 +9,7 @@ import { getUserWithdrawals } from "../../../../utils/withdrawal.utils";
 
 const ManageFundsReport = ({ setShowReport, userId }) => {
   const [activeTab, setActiveTab] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
 
   const [withdrawals, setWithdrawals] = useState([]);
   const [deposits, setDeposits] = useState([]);
@@ -20,17 +21,20 @@ const ManageFundsReport = ({ setShowReport, userId }) => {
 
   const sidebarItems = ["Withdrawal", "Deposit", "Payments", "Transaction"];
 
-  /* ------------------ FETCH DATA ------------------ */
   useEffect(() => {
+    // Fetch Withdrawals
     const fetchWithdrawals = async () => {
       try {
         const data = await getUserWithdrawals({ userId });
+
+        console.log("data: ", data);
         setWithdrawals(data);
       } catch (err) {
         console.error("Error Fetching Withdrawals:", err);
       }
     };
 
+    // Fetch Deposits and Transactions
     const fetchDepositsAndTransactions = async () => {
       try {
         const response = await fetch(
@@ -56,6 +60,7 @@ const ManageFundsReport = ({ setShowReport, userId }) => {
       }
     };
 
+    // Fetch Payments
     const fetchPayments = async () => {
       try {
         const response = await fetch(
@@ -77,7 +82,7 @@ const ManageFundsReport = ({ setShowReport, userId }) => {
     fetchWithdrawals();
     fetchDepositsAndTransactions();
     fetchPayments();
-  }, [userId]);
+  }, [userId, isLoading]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -149,7 +154,13 @@ const ManageFundsReport = ({ setShowReport, userId }) => {
 
         <div className="flex-1 flex flex-col p-6 overflow-hidden">
           <div className="flex-1 overflow-auto">
-            {activeTab === 0 && <WithdrawalTable withdrawals={paginatedData} />}
+            {activeTab === 0 && (
+              <WithdrawalTable
+                withdrawals={paginatedData}
+                setIsLoading={setIsLoading}
+                isLoading={isLoading}
+              />
+            )}
 
             {activeTab === 1 && <DepositTable deposits={paginatedData} />}
 

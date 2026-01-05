@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { 
-  ArrowLeft, 
-  Landmark, 
-  AlertCircle, 
-  CheckCircle, 
+import {
+  ArrowLeft,
+  Landmark,
+  AlertCircle,
+  CheckCircle,
   Loader2,
   Shield,
   Info,
-  DollarSign
+  DollarSign,
 } from "lucide-react";
 import Button from "../../../../components/common/Button/Button";
 import axios from "axios";
@@ -20,21 +20,21 @@ export default function UserWithdraw({ setActiveSubMenu, user }) {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
   const [withdrawalData, setWithdrawalData] = useState(null);
-  
+
   // Bank Details
   const [bankDetails, setBankDetails] = useState({
     accountName: "",
     accountNumber: "",
     bankName: "",
     routingNumber: "",
-    swiftCode: ""
+    swiftCode: "",
   });
 
   // Crypto Details
   const [cryptoDetails, setCryptoDetails] = useState({
     walletAddress: "",
     currency: "btc",
-    network: "BTC"
+    network: "BTC",
   });
 
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
@@ -46,8 +46,8 @@ export default function UserWithdraw({ setActiveSubMenu, user }) {
   const fetchBalance = async () => {
     try {
       const response = await axios.get(`${API_URL}/payment/balance`, {
-        headers: { 'user-id': user._id }
-      }); 
+        headers: { "user-id": user._id },
+      });
       setBalance(response.data.balance);
     } catch (err) {
       console.error("Error fetching balance:", err);
@@ -58,7 +58,7 @@ export default function UserWithdraw({ setActiveSubMenu, user }) {
   const handleBankInputChange = (e) => {
     setBankDetails({
       ...bankDetails,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.value,
     });
     setError(""); // Clear error on input change
   };
@@ -66,7 +66,7 @@ export default function UserWithdraw({ setActiveSubMenu, user }) {
   const handleCryptoInputChange = (e) => {
     setCryptoDetails({
       ...cryptoDetails,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.value,
     });
     setError(""); // Clear error on input change
   };
@@ -90,11 +90,15 @@ export default function UserWithdraw({ setActiveSubMenu, user }) {
     }
 
     if (withdrawMethod === "bank") {
-      if (!bankDetails.accountName || !bankDetails.accountNumber || !bankDetails.bankName) {
+      if (
+        !bankDetails.accountName ||
+        !bankDetails.accountNumber ||
+        !bankDetails.bankName
+      ) {
         setError("Please fill in all required bank details");
         return false;
       }
-      
+
       // Validate account number (basic)
       if (bankDetails.accountNumber.length < 8) {
         setError("Invalid account number");
@@ -105,9 +109,12 @@ export default function UserWithdraw({ setActiveSubMenu, user }) {
         setError("Please enter your wallet address");
         return false;
       }
-      
+
       // Basic wallet address validation
-      if (cryptoDetails.walletAddress.length < 26 || cryptoDetails.walletAddress.length > 62) {
+      if (
+        cryptoDetails.walletAddress.length < 26 ||
+        cryptoDetails.walletAddress.length > 62
+      ) {
         setError("Invalid wallet address format");
         return false;
       }
@@ -119,7 +126,7 @@ export default function UserWithdraw({ setActiveSubMenu, user }) {
   const calculateFee = () => {
     const withdrawAmount = parseFloat(amount);
     if (isNaN(withdrawAmount)) return 0;
-    
+
     const feePercentage = withdrawMethod === "crypto" ? 0.02 : 0.01; // 2% crypto, 1% bank
     return (withdrawAmount * feePercentage).toFixed(2);
   };
@@ -127,7 +134,7 @@ export default function UserWithdraw({ setActiveSubMenu, user }) {
   const calculateNetAmount = () => {
     const withdrawAmount = parseFloat(amount);
     if (isNaN(withdrawAmount)) return 0;
-    
+
     return (withdrawAmount - parseFloat(calculateFee())).toFixed(2);
   };
 
@@ -142,24 +149,26 @@ export default function UserWithdraw({ setActiveSubMenu, user }) {
       const withdrawalPayload = {
         amount: parseFloat(amount),
         method: withdrawMethod,
-        details: withdrawMethod === "bank" ? bankDetails : cryptoDetails
+        details: withdrawMethod === "bank" ? bankDetails : cryptoDetails,
+        userId: user._id,
       };
 
-      console.log('📤 Submitting withdrawal:', withdrawalPayload);
+      console.log("📤 Submitting withdrawal:", withdrawalPayload);
 
       const response = await axios.post(
         `${API_URL}/withdrawal/create`,
-        withdrawalPayload,
-        {
-          headers: { 'user-id': user._id }
-        }
+        withdrawalPayload
+        // {
+        //   headers: { userId: user._id },
+        //   credentials: "include",
+        // }
       );
 
-      console.log('✅ Withdrawal created:', response.data);
-      
+      console.log("✅ Withdrawal created:", response.data);
+
       setWithdrawalData(response.data);
       setSuccess(true);
-      
+
       // Reset form
       setAmount("");
       setBankDetails({
@@ -167,22 +176,22 @@ export default function UserWithdraw({ setActiveSubMenu, user }) {
         accountNumber: "",
         bankName: "",
         routingNumber: "",
-        swiftCode: ""
+        swiftCode: "",
       });
       setCryptoDetails({
         walletAddress: "",
         currency: "btc",
-        network: "BTC"
+        network: "BTC",
       });
-      
+
       // Refresh balance
       fetchBalance();
-
     } catch (err) {
-      console.error('❌ Withdrawal error:', err);
-      const errorMsg = err.response?.data?.error || 
-                      err.response?.data?.message || 
-                      "Failed to process withdrawal";
+      console.error("❌ Withdrawal error:", err);
+      const errorMsg =
+        err.response?.data?.error ||
+        err.response?.data?.message ||
+        "Failed to process withdrawal";
       setError(errorMsg);
     } finally {
       setLoading(false);
@@ -195,7 +204,7 @@ export default function UserWithdraw({ setActiveSubMenu, user }) {
     usdt: ["TRC20", "ERC20", "BEP20"],
     ltc: ["LTC"],
     bnb: ["BEP20"],
-    trx: ["TRC20"]
+    trx: ["TRC20"],
   };
 
   // Success Screen
@@ -235,7 +244,9 @@ export default function UserWithdraw({ setActiveSubMenu, user }) {
                 </span>
               </div>
               <div className="border-t pt-3 flex justify-between items-center">
-                <span className="text-gray-800 font-semibold">You'll Receive</span>
+                <span className="text-gray-800 font-semibold">
+                  You'll Receive
+                </span>
                 <span className="text-xl font-bold text-green-600">
                   ${withdrawalData.net_amount.toFixed(2)}
                 </span>
@@ -245,7 +256,10 @@ export default function UserWithdraw({ setActiveSubMenu, user }) {
             {/* Processing Info */}
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
               <div className="flex gap-3">
-                <Info size={20} className="text-blue-600 flex-shrink-0 mt-0.5" />
+                <Info
+                  size={20}
+                  className="text-blue-600 flex-shrink-0 mt-0.5"
+                />
                 <div className="text-sm text-blue-800 text-left">
                   <p className="font-semibold mb-2">Processing Time:</p>
                   <p>{withdrawalData.estimated_processing_time}</p>
@@ -293,7 +307,9 @@ export default function UserWithdraw({ setActiveSubMenu, user }) {
           <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <DollarSign size={32} className="text-red-600" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">Withdraw Funds</h2>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">
+            Withdraw Funds
+          </h2>
           <p className="text-gray-600">Transfer money from your wallet</p>
         </div>
 
@@ -301,7 +317,11 @@ export default function UserWithdraw({ setActiveSubMenu, user }) {
         <div className="bg-gradient-to-r from-yellow-50 to-yellow-100 rounded-lg p-4 border border-yellow-200">
           <p className="text-sm text-gray-600 mb-1">Available Balance</p>
           <p className="text-3xl font-bold text-gray-800">
-            ${balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            $
+            {balance.toLocaleString(undefined, {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}
           </p>
         </div>
 
@@ -375,16 +395,20 @@ export default function UserWithdraw({ setActiveSubMenu, user }) {
             <span>Minimum: $20</span>
             <span>Maximum: ${balance.toFixed(2)}</span>
           </div>
-          
+
           {/* Fee Breakdown */}
           {amount && parseFloat(amount) >= 20 && (
             <div className="mt-3 p-3 bg-gray-50 rounded-lg text-sm space-y-1">
               <div className="flex justify-between">
                 <span className="text-gray-600">Withdrawal Amount:</span>
-                <span className="font-semibold">${parseFloat(amount).toFixed(2)}</span>
+                <span className="font-semibold">
+                  ${parseFloat(amount).toFixed(2)}
+                </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">Processing Fee ({withdrawMethod === 'crypto' ? '2%' : '1%'}):</span>
+                <span className="text-gray-600">
+                  Processing Fee ({withdrawMethod === "crypto" ? "2%" : "1%"}):
+                </span>
                 <span className="text-red-600">-${calculateFee()}</span>
               </div>
               <div className="flex justify-between border-t pt-1 font-semibold">
@@ -419,7 +443,7 @@ export default function UserWithdraw({ setActiveSubMenu, user }) {
               <Landmark size={18} />
               Bank Account Details
             </h3>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Account Holder Name *
@@ -541,7 +565,7 @@ export default function UserWithdraw({ setActiveSubMenu, user }) {
                 ))}
               </select>
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Wallet Address *
@@ -557,7 +581,8 @@ export default function UserWithdraw({ setActiveSubMenu, user }) {
               />
               <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
                 <AlertCircle size={12} />
-                Double-check your address. Crypto transactions cannot be reversed.
+                Double-check your address. Crypto transactions cannot be
+                reversed.
               </p>
             </div>
           </div>
@@ -566,7 +591,12 @@ export default function UserWithdraw({ setActiveSubMenu, user }) {
         {/* Submit Button */}
         <button
           onClick={handleWithdraw}
-          disabled={loading || !amount || parseFloat(amount) < 20 || parseFloat(amount) > balance}
+          disabled={
+            loading ||
+            !amount ||
+            parseFloat(amount) < 20 ||
+            parseFloat(amount) > balance
+          }
           className="w-full bg-red-500 hover:bg-red-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-lg transition flex items-center justify-center gap-2"
         >
           {loading ? (
@@ -585,7 +615,10 @@ export default function UserWithdraw({ setActiveSubMenu, user }) {
         {/* Warning */}
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
           <div className="flex gap-3">
-            <AlertCircle size={20} className="text-yellow-600 flex-shrink-0 mt-0.5" />
+            <AlertCircle
+              size={20}
+              className="text-yellow-600 flex-shrink-0 mt-0.5"
+            />
             <div className="text-sm text-yellow-800">
               <p className="font-semibold mb-1">Important Information:</p>
               <ul className="list-disc list-inside space-y-1">
