@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   ArrowLeft,
   Landmark,
@@ -41,35 +41,31 @@ export default function UserWithdraw({ setActiveSubMenu, user }) {
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
 
   useEffect(() => {
-    let isMounted = true
+    let isMounted = true;
     const fetchBalance = async () => {
       try {
         const response = await axios.get(`${API_URL}/payment/balance`, {
-          headers: { 'user-id': user._id }
-        }); 
-        if(isMounted)
-        {
+          headers: { "user-id": user._id },
+        });
+        if (isMounted) {
           setBalance(response.data.balance);
         }
-        
       } catch (err) {
         console.error("Error fetching balance:", err);
         setError("Failed to load balance");
-      } finally{
+      } finally {
         setTimeout(() => {
-          setLoadingPage(false)
+          setLoadingPage(false);
         }, 300);
       }
     };
 
     fetchBalance();
 
-    return ()=>{
-      isMounted = false
-    }
-  }, []);
-
-  
+    return () => {
+      isMounted = false;
+    };
+  }, [user._id, API_URL, error, loading, success]);
 
   const handleBankInputChange = (e) => {
     setBankDetails({
@@ -201,7 +197,7 @@ export default function UserWithdraw({ setActiveSubMenu, user }) {
       });
 
       // Refresh balance
-      fetchBalance();
+      // fetchBalance();
     } catch (err) {
       console.error("❌ Withdrawal error:", err);
       const errorMsg =
@@ -223,13 +219,12 @@ export default function UserWithdraw({ setActiveSubMenu, user }) {
     trx: ["TRC20"],
   };
 
-   if(loadingPage)
-  {
-    return(
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-orange-50">
+  if (loadingPage) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-gray-50 to-orange-50">
         <div className="w-16 h-16 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin"></div>
       </div>
-    )
+    );
   }
 
   // Success Screen
@@ -281,10 +276,7 @@ export default function UserWithdraw({ setActiveSubMenu, user }) {
             {/* Processing Info */}
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
               <div className="flex gap-3">
-                <Info
-                  size={20}
-                  className="text-blue-600 flex-shrink-0 mt-0.5"
-                />
+                <Info size={20} className="text-blue-600 shrink-0 mt-0.5" />
                 <div className="text-sm text-blue-800 text-left">
                   <p className="font-semibold mb-2">Processing Time:</p>
                   <p>{withdrawalData.estimated_processing_time}</p>
@@ -339,7 +331,7 @@ export default function UserWithdraw({ setActiveSubMenu, user }) {
         </div>
 
         {/* Available Balance */}
-        <div className="bg-gradient-to-r from-yellow-50 to-yellow-100 rounded-lg p-4 border border-yellow-200">
+        <div className="bg-linear-to-r from-yellow-50 to-yellow-100 rounded-lg p-4 border border-yellow-200">
           <p className="text-sm text-gray-600 mb-1">Available Balance</p>
           <p className="text-3xl font-bold text-gray-800">
             $
@@ -352,7 +344,7 @@ export default function UserWithdraw({ setActiveSubMenu, user }) {
 
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex gap-3">
-            <AlertCircle size={20} className="text-red-600 flex-shrink-0" />
+            <AlertCircle size={20} className="text-red-600 shrink-0" />
             <p className="text-sm text-red-800">{error}</p>
           </div>
         )}
@@ -642,7 +634,7 @@ export default function UserWithdraw({ setActiveSubMenu, user }) {
           <div className="flex gap-3">
             <AlertCircle
               size={20}
-              className="text-yellow-600 flex-shrink-0 mt-0.5"
+              className="text-yellow-600 shrink-0 mt-0.5"
             />
             <div className="text-sm text-yellow-800">
               <p className="font-semibold mb-1">Important Information:</p>
