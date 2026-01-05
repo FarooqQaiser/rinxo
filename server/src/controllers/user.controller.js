@@ -2,57 +2,6 @@ import bcrypt from "bcryptjs";
 import User from "../models/User.model.js";
 import { Payment, Transaction } from "../models/payment.models.js";
 
-// export const uploadNICImages = async (req, res) => {
-//   try {
-//     const userData = req.user;
-
-//     if (!req.files?.frontImage || !req.files?.backImage) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "Both front and back NIC images are required!",
-//       });
-//     }
-
-//     const frontImagePath = req.files.frontImage[0].path;
-//     const backImagePath = req.files.backImage[0].path;
-
-//     const user = await User.findOne({ email: userData.email });
-
-//     if (!user) {
-//       return res.status(404).json({
-//         success: false,
-//         message: "User does not exist!",
-//       });
-//     }
-
-//     if (["active", "pending"].includes(user.status)) {
-//       return res.status(400).json({
-//         success: false,
-//         message: `NIC already uploaded! Status: ${user.status}`,
-//       });
-//     }
-
-//     user.nic = {
-//       frontImage: frontImagePath,
-//       backImage: backImagePath,
-//     };
-//     user.status = "pending";
-
-//     await user.save();
-
-//     return res.status(201).json({
-//       success: true,
-//       message: "NIC uploaded successfully!",
-//       nicStatus: user.status,
-//     });
-//   } catch (err) {
-//     return res.status(500).json({
-//       success: false,
-//       message: `Server Error: ${err.message}`,
-//     });
-//   }
-// };
-
 export const uploadNICImages = async (req, res) => {
   try {
     const userData = req.user;
@@ -314,6 +263,19 @@ export const updateAdminProfile = async (req, res) => {
         message: "Not found",
       });
     }
+
+    const phoneExists = await User.exists({
+      phoneNumber,
+      _id: { $ne: admin._id },
+    });
+
+    if (phoneExists) {
+      return res.status(400).json({
+        success: false,
+        message: "Change Your Number",
+      });
+    }
+
 
     const updateData = {};
 

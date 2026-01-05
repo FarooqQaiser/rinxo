@@ -74,7 +74,7 @@ export default function VerifyIdentityModal({
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-lg font-bold text-gray-800">Verify Identity</h2>
           <button
-            onClick={() => setModalOpen(false)}
+            onClick={() =>{ setModalOpen(false), setActiveSubMenu("undefined")}}
             className="p-1 hover:bg-gray-100 rounded-lg transition"
           >
             <X size={24} />

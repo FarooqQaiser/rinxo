@@ -21,6 +21,8 @@ export default function Settings({ user }) {
     new: false,
     confirm: false,
   });
+  const [countryCode, setCountryCode] = useState("+92");
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
@@ -30,8 +32,7 @@ export default function Settings({ user }) {
     const fetchUser = async () => {
       try {
         setLoading(true);
-        const data = await specificData(user._id);
-        console.log("data", data);
+        const data = await specificData(user._id); 
         setUserData(data.data);
         setFormData({
           fullName: data.data.fullName || "",
@@ -49,24 +50,104 @@ export default function Settings({ user }) {
       fetchUser();
     }
   }, [user._id]);
+ 
+  useEffect(() => {
+  if (userData?.phoneNumber) {
+    // Extract country code and number
+    if (userData.phoneNumber.startsWith("+92")) {
+      setCountryCode("+92");
+      const numberWithoutCode = userData.phoneNumber.replace("+92", "").trim();
+      setFormData(prev => ({
+        ...prev,
+        phoneNumber: numberWithoutCode,
+      }));
+    } else if (userData.phoneNumber.startsWith("+1")) {
+      setCountryCode("+1");
+      const numberWithoutCode = userData.phoneNumber.replace("+1", "").trim();
+      setFormData(prev => ({
+        ...prev,
+        phoneNumber: numberWithoutCode,
+      }));
+    } else if (userData.phoneNumber.startsWith("+44")) {
+      setCountryCode("+44");
+      const numberWithoutCode = userData.phoneNumber.replace("+44", "").trim();
+      setFormData(prev => ({
+        ...prev,
+        phoneNumber: numberWithoutCode,
+      }));
+    } else {
+      // Default case if no country code detected
+      setFormData(prev => ({
+        ...prev,
+        phoneNumber: userData.phoneNumber,
+      }));
+    }
+  }
+}, [userData]);
 
-  const handleEdit = () => {
-    setFormData({
-      fullName: userData.fullName || "",
-      phoneNumber: userData.phoneNumber || "",
-    });
-    setIsEditing(true);
-    setError(null);
+
+  const normalizePhoneNumber = (countryCode, phone) => {
+    let cleaned = phone.replace(/\D/g, "");
+
+    if (cleaned.startsWith("0")) {
+      cleaned = cleaned.slice(1);
+    }
+
+    return `${countryCode}${cleaned}`;
   };
 
-  const handleCancel = () => {
-    setFormData({
-      fullName: userData.fullName || "",
-      phoneNumber: userData.phoneNumber || "",
-    });
-    setIsEditing(false);
-    setError(null);
-  };
+
+ const handleEdit = () => {
+  let phoneOnly = userData.phoneNumber || "";
+  let detectedCode = "+92";
+
+  if (userData.phoneNumber) {
+    if (userData.phoneNumber.startsWith("+92")) {
+      detectedCode = "+92";
+      phoneOnly = userData.phoneNumber.replace("+92", "").trim();
+    } else if (userData.phoneNumber.startsWith("+1")) {
+      detectedCode = "+1";
+      phoneOnly = userData.phoneNumber.replace("+1", "").trim();
+    } else if (userData.phoneNumber.startsWith("+44")) {
+      detectedCode = "+44";
+      phoneOnly = userData.phoneNumber.replace("+44", "").trim();
+    }
+  }
+  setCountryCode(detectedCode);
+  setFormData({
+    fullName: userData.fullName || "",
+    phoneNumber: phoneOnly,
+  });
+  setIsEditing(true);
+  setError(null);
+};
+
+const handleCancel = () => {
+  let phoneOnly = userData.phoneNumber || "";
+  let detectedCode = "+92";
+
+  if (userData.phoneNumber) {
+    if (userData.phoneNumber.startsWith("+92")) {
+      detectedCode = "+92";
+      phoneOnly = userData.phoneNumber.replace("+92", "").trim();
+    } else if (userData.phoneNumber.startsWith("+1")) {
+      detectedCode = "+1";
+      phoneOnly = userData.phoneNumber.replace("+1", "").trim();
+    } else if (userData.phoneNumber.startsWith("+44")) {
+      detectedCode = "+44";
+      phoneOnly = userData.phoneNumber.replace("+44", "").trim();
+    }
+  }
+
+  setCountryCode(detectedCode);
+  setFormData({
+    fullName: userData.fullName || "",
+    phoneNumber: phoneOnly,
+  });
+  setIsEditing(false);
+  setError(null);
+};
+
 
   const handleCancelPassword = () => {
     setPasswordData({
@@ -88,9 +169,17 @@ export default function Settings({ user }) {
       if (formData.fullName && formData.fullName !== userData.fullName) {
         updatePayload.fullName = formData.fullName;
       }
-      if (formData.phoneNumber && formData.phoneNumber !== userData.phoneNumber) {
-        updatePayload.phoneNumber = formData.phoneNumber;
+     if (formData.phoneNumber) {
+        const normalizedPhone = normalizePhoneNumber(
+          countryCode,
+          formData.phoneNumber
+        );
+
+        if (normalizedPhone !== userData.phoneNumber) {
+          updatePayload.phoneNumber = normalizedPhone;
+        }
       }
+
 
       if (Object.keys(updatePayload).length === 0) {
         setError("No changes to save");
@@ -112,8 +201,8 @@ export default function Settings({ user }) {
          setIsEditing(false); 
       }
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to update profile");
-      console.error("Update error:", err);
+      setError(err.message || "Failed to update profile");
+     
       setIsEditing(false); 
     } finally {
       setSaving(false);
@@ -250,6 +339,43 @@ export default function Settings({ user }) {
 
           {/* Phone */}
           <div>
+  <label className="text-sm text-gray-600 block mb-1">
+    Phone Number
+  </label>
+
+  {isEditing ? (
+    <div className="flex gap-2">
+      <select
+        value={countryCode}
+        onChange={(e) => setCountryCode(e.target.value)}
+        className="w-24 px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-400"
+      >
+        <option value="+1">🇺🇸 +1</option>
+        <option value="+44">🇬🇧 +44</option>
+        <option value="+92">🇵🇰 +92</option>
+      </select>
+
+      <input
+        type="tel"
+        value={formData.phoneNumber}
+        onChange={(e) =>
+          setFormData({
+            ...formData,
+            phoneNumber: e.target.value.replace(/\D/g, ""),
+          })
+        }
+        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:outline-none"
+        placeholder="3012345678"
+      />
+    </div>
+  ) : (
+    <p className="font-semibold text-gray-800">
+      {userData.phoneNumber}
+    </p>
+  )}
+</div>
+
+          {/* <div>
             <label className="text-sm text-gray-600 block mb-1">
               Phone Number
             </label>
@@ -267,7 +393,7 @@ export default function Settings({ user }) {
                 {userData.phoneNumber}
               </p>
             )}
-          </div>
+          </div> */}
 
           {/* Save Button for Profile */}
           {isEditing && (

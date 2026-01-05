@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import Button from "../common/Button/Button";
 import { PORTAL_URL } from "../../../src/config";
+import { Link } from "react-router-dom";
 
 /* ---------------- Dropdown Wrapper ---------------- */
 const DropdownMenu = ({ title, isOpen, onOpen, onClose, children }) => (
@@ -207,7 +208,7 @@ const Header = () => {
             </button>
           ))}  
           <Button btnName="Login" locationHref={`${PORTAL_URL}/login`} extraCss="px-5 py-2 rounded  text-white ml-[50px] -mr-[10px]"  bgColour="bg-gray-800"  textColour="text-gray-900"  hoverBgColour="hover:bg-gray-700 transition" fontTextStyle="" />
-          <Button btnName="Get Started" locationHref="/" extraCss="px-5 py-2 rounded" bgColour="bg-yellow-400"  textColour="text-gray-900"  hoverBgColour="hover:bg-yellow-500 transition" fontTextStyle="font-semibold transition" />
+          <Button btnName="Get Started" locationHref="/register" extraCss="px-5 py-2 rounded" bgColour="bg-yellow-400"  textColour="text-gray-900"  hoverBgColour="hover:bg-yellow-500 transition" fontTextStyle="font-semibold transition" />
           {/* <button className="px-5 py-2 bg-yellow-400 text-gray-900 rounded font-semibold hover:bg-yellow-500 transition">
             Get Started
           </button> */}
@@ -236,10 +237,12 @@ const Header = () => {
               {item}
             </button>
           ))}
-
-          <button className="w-full bg-yellow-400 text-gray-900 py-3 rounded font-semibold">
-            Get Started
-          </button>
+           <Link to={"/login"}>
+              <button className="w-full bg-yellow-400 text-gray-900 py-3 rounded font-semibold">
+                Get Started
+              </button>
+           </Link>
+          
         </div>
       )}
     </header>

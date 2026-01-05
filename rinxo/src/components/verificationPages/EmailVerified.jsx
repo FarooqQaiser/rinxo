@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { CheckCircle, XCircle } from "lucide-react";
-import { useParams, useNavigate } from "react-router-dom"; 
-import LoginLogo from "../../assets/images/user/icons/prelogin_logo.png"; 
+import { useParams, useNavigate } from "react-router-dom";
+import LoginLogo from "../../assets/images/user/icons/prelogin_logo.png";
 import { verifyEmail } from "../../utils/auth.utils";
 import TopSlideLoading from "../common/Loading/TopSlideLoading";
 
@@ -12,18 +12,20 @@ export default function EmailVerified() {
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState("loading"); // loading | success | error
   const [message, setMessage] = useState("");
+  const hasRun = React.useRef(false);
 
   useEffect(() => {
+    if (hasRun.current) return;
+    hasRun.current = true;
+
     const verify = async () => {
       try {
         const res = await verifyEmail(token);
         setStatus("success");
-        setMessage(res.message || "Email verified successfully!");
+        setMessage(res.message);
       } catch (err) {
         setStatus("error");
-        setMessage(
-          err.message || "Invalid or expired verification link."
-        );
+        setMessage(err.message);
       } finally {
         setLoading(false);
       }
@@ -53,9 +55,7 @@ export default function EmailVerified() {
         {status === "success" && (
           <>
             <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold mb-2">
-              Email Verified!
-            </h2>
+            <h2 className="text-2xl font-bold mb-2">Email Verified!</h2>
             <p className="text-gray-600 mb-6">{message}</p>
 
             <button
@@ -70,9 +70,7 @@ export default function EmailVerified() {
         {status === "error" && (
           <>
             <XCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold mb-2">
-              Verification Failed
-            </h2>
+            <h2 className="text-2xl font-bold mb-2">Verification Failed</h2>
             <p className="text-gray-600 mb-6">{message}</p>
 
             <button

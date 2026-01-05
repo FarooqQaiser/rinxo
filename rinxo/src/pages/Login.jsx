@@ -1,8 +1,8 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import TopSlideLoading from "../components/common/Loading/TopSlideLoading";
 import LoginLogo from "../../src/assets/images/user/icons/prelogin_logo.png";
-import {  loginUser } from "../utils/auth.utils";
+import { loginUser } from "../utils/auth.utils";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 
@@ -12,20 +12,25 @@ export default function Login() {
     phone: "",
     password: "",
   });
-   const navigate = useNavigate();
+  const navigate = useNavigate();
   const [loginType, setLoginType] = useState("email"); // email or phone
   const [countryCode, setCountryCode] = useState("+1");
   const [passwordVisible, setPasswordVisible] = useState(false);
+  const [webLoading, setWebLoading] = useState(true);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
 
   const togglePassword = () => setPasswordVisible(!passwordVisible);
 
+    useEffect(() => {
+      const timer = setTimeout(() => setWebLoading(false), 800);
+      return () => clearTimeout(timer);
+    }, []);
+
   const getValue = (e) =>
     setFormData({ ...formData, [e.target.name]: e.target.value });
 
-
-   const normalizePhoneNumber = (countryCode, phone) => {
+  const normalizePhoneNumber = (countryCode, phone) => {
     let cleaned = phone.replace(/\D/g, ""); // remove non-numeric
 
     // Remove leading 0 (Pakistan, UK, etc.)
@@ -36,7 +41,6 @@ export default function Login() {
     return `${countryCode}${cleaned}`;
   };
 
-
   /* ================= VALIDATION ================= */
   const validate = () => {
     let tempErrors = {};
@@ -46,16 +50,15 @@ export default function Login() {
       else if (!/\S+@\S+\.\S+/.test(formData.email))
         tempErrors.email = "Invalid email format";
     } else {
-       
-          if (!formData.phone) {
-          tempErrors.phone = "Phone number is required";
-        } else {
-          const cleaned = formData.phone.replace(/\D/g, "");
+      if (!formData.phone) {
+        tempErrors.phone = "Phone number is required";
+      } else {
+        const cleaned = formData.phone.replace(/\D/g, "");
 
-          if (cleaned.length < 7 || cleaned.length > 12) {
-            tempErrors.phone = "Invalid phone number";
-          }
+        if (cleaned.length < 7 || cleaned.length > 12) {
+          tempErrors.phone = "Invalid phone number";
         }
+      }
     }
 
     if (!formData.password) tempErrors.password = "Password is required";
@@ -66,39 +69,37 @@ export default function Login() {
     return Object.keys(tempErrors).length === 0;
   };
 
-/* ================= SUBMIT ================= */
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  if (!validate()) return;
+  /* ================= SUBMIT ================= */
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!validate()) return;
 
-  setLoading(true);
-  try {
-    const phoneNumber = normalizePhoneNumber(countryCode, formData.phone);
-    const payload =
-      loginType === "email"
-        ? { email: formData.email, password: formData.password }
-        : { phoneNumber: `${phoneNumber}`, password: formData.password };
+    setLoading(true);
+    try {
+      const phoneNumber = normalizePhoneNumber(countryCode, formData.phone);
+      const payload =
+        loginType === "email"
+          ? { email: formData.email, password: formData.password }
+          : { phoneNumber: `${phoneNumber}`, password: formData.password };
 
-    const res = await loginUser(payload); // API call
+      const res = await loginUser(payload); // API call
 
-    if (res.success) {
-      toast.success(res.message);
-      navigate("/dashboard"); // redirect user
-    } else {
-      toast.error(res.message || "Login failed");
+      if (res.success) {
+        toast.success(res.message);
+        navigate("/dashboard"); // redirect user
+      } else {
+        toast.error(res.message || "Login failed");
+      }
+    } catch (err) {
+      toast.error(err.message || "Login failed");
+    } finally {
+      setLoading(false);
     }
-  } catch (err) {
-    toast.error(err.message || "Login failed");
-  } finally {
-    setLoading(false);
-  }
-};
-
-
+  };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4 relative">
-      <TopSlideLoading show={loading} />
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-yellow-50 to-orange-50 px-4 relative">
+      <TopSlideLoading show={webLoading} />
 
       <div className="bg-white rounded-lg shadow-lg p-8 w-full max-w-md relative z-10">
         <div className="mx-auto text-center mb-4">
@@ -128,66 +129,50 @@ const handleSubmit = async (e) => {
                 onChange={getValue}
                 placeholder="Email *"
                 className={`w-full border rounded-md p-3 text-sm focus:outline-none focus:ring-2 ${
-                  errors.email ? "border-red-500 focus:ring-red-400" : "border-gray-300 focus:ring-yellow-400"
-                }`}
-              />
-              {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
-            </div>
-          ) : (
-            <div>
-              <label className="block text-gray-700 mb-1 text-sm">Phone Number</label>
-              <div className="flex gap-2">
-                {/* <select
-                  value={countryCode}
-                  onChange={(e) => setCountryCode(e.target.value)}
-                  className={`border rounded-md p-2 text-sm focus:outline-none focus:ring-2 ${
-                    errors.phone ? "border-red-500 focus:ring-red-400" : "border-gray-300 focus:ring-yellow-400"
-                  }`}
-                >
-                  {[{ code: "+1", name: "USA" }, { code: "+44", name: "UK" }, { code: "+92", name: "Pakistan" }].map(
-                    (c) => (
-                      <option key={c.code} value={c.code}>
-                        {c.code} {c.name}
-                      </option>
-                    )
-                  )}
-                </select>
-                <input
-                  type="tel"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={getValue}
-                  placeholder="Phone Number *"
-                  className={`flex-1 border rounded-md p-3 text-sm focus:outline-none focus:ring-2 ${
-                    errors.phone ? "border-red-500 focus:ring-red-400" : "border-gray-300 focus:ring-yellow-400"
-                  }`}
-                /> */}
-                 <select
-                value={countryCode}
-                onChange={(e) => setCountryCode(e.target.value)}
-                className="border rounded-md p-3 text-sm focus:outline-none focus:ring-2 border-gray-300 focus:ring-yellow-400"
-              >
-                <option value="+1">+1</option>
-                <option value="+44">+44</option>
-                <option value="+92">+92</option>
-              </select>
-
-              <input
-                name="phone"
-                value={formData.phone}
-                onChange={(e) => {
-                  const value = e.target.value.replace(/\D/g, "");
-                  setFormData({ ...formData, phone: value });
-                }}
-                placeholder="3012345678"
-                className={`flex-1 border rounded-md p-3 text-sm focus:outline-none focus:ring-2 ${
-                  errors.phone
+                  errors.email
                     ? "border-red-500 focus:ring-red-400"
                     : "border-gray-300 focus:ring-yellow-400"
                 }`}
               />
+              {errors.email && (
+                <p className="text-red-500 text-xs mt-1">{errors.email}</p>
+              )}
+            </div>
+          ) : (
+            <div>
+              <label className="block text-gray-700 mb-1 text-sm">
+                Phone Number
+              </label>
+              <div className="flex gap-2">
+                 
+                <select
+                  value={countryCode}
+                  onChange={(e) => setCountryCode(e.target.value)}
+                  className="border rounded-md p-3 text-sm focus:outline-none focus:ring-2 border-gray-300 focus:ring-yellow-400"
+                >
+                  <option value="+1">+1</option>
+                  <option value="+44">+44</option>
+                  <option value="+92">+92</option>
+                </select>
+
+                <input
+                  name="phone"
+                  value={formData.phone}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/\D/g, "");
+                    setFormData({ ...formData, phone: value });
+                  }}
+                  placeholder="3012345678"
+                  className={`flex-1 border rounded-md p-3 text-sm focus:outline-none focus:ring-2 ${
+                    errors.phone
+                      ? "border-red-500 focus:ring-red-400"
+                      : "border-gray-300 focus:ring-yellow-400"
+                  }`}
+                />
               </div>
-              {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
+              {errors.phone && (
+                <p className="text-red-500 text-xs mt-1">{errors.phone}</p>
+              )}
             </div>
           )}
 
@@ -202,7 +187,9 @@ const handleSubmit = async (e) => {
                 onChange={getValue}
                 placeholder="Password *"
                 className={`w-full border rounded-md p-3 pr-10 text-sm focus:outline-none focus:ring-2 ${
-                  errors.password ? "border-red-500 focus:ring-red-400" : "border-gray-300 focus:ring-yellow-400"
+                  errors.password
+                    ? "border-red-500 focus:ring-red-400"
+                    : "border-gray-300 focus:ring-yellow-400"
                 }`}
               />
               <button
@@ -213,7 +200,9 @@ const handleSubmit = async (e) => {
                 {passwordVisible ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
-            {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
+            {errors.password && (
+              <p className="text-red-500 text-xs mt-1">{errors.password}</p>
+            )}
           </div>
 
           <div className="text-right">
@@ -226,7 +215,9 @@ const handleSubmit = async (e) => {
             type="submit"
             disabled={loading}
             className={`w-full py-3 rounded-full font-semibold transition ${
-              loading ? "bg-gray-400 cursor-not-allowed" : "bg-yellow-400 hover:bg-yellow-500 text-white"
+              loading
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-yellow-400 hover:bg-yellow-500 text-white"
             }`}
           >
             {loading ? "Signing In..." : "Sign In"}
@@ -235,7 +226,10 @@ const handleSubmit = async (e) => {
 
         <div className="text-center mt-6 space-y-2">
           <p className="text-gray-500 text-sm">Do not have an account?</p>
-          <a href="/register" className="block text-yellow-400 font-semibold hover:underline text-sm">
+          <a
+            href="/register"
+            className="block text-yellow-400 font-semibold hover:underline text-sm"
+          >
             Individual Account Registration
           </a>
         </div>

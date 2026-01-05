@@ -23,33 +23,46 @@ export default function UserDeposit({ setActiveSubMenu, user }) {
   const [currencies, setCurrencies] = useState([]);
   const [estimatedAmount, setEstimatedAmount] = useState(null);
   const [estimating, setEstimating] = useState(false);
+  const [loadingPage, setLoadingPage] = useState(true);
   const [loading, setLoading] = useState(false);
   const [payment, setPayment] = useState(null);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
-
+  const POPULAR_CRYPTOS = ["btc", "eth", "usdt", "ltc", "bnb", "trx"];
   /* ================= FETCH CURRENCIES ================= */
+
+
   useEffect(() => {
-    const loadCurrencies = async () => {
-      try {
-        const data = await fetchCurrencies();
-        const popularCryptos = ["btc", "eth", "usdt", "ltc", "bnb", "trx"];
+  let isMounted = true;
 
-        const filtered = data.currencies.filter((c) =>
-          popularCryptos.includes(c.toLowerCase())
-        );
+  const init = async () => {
+    try {
+      const data = await fetchCurrencies();
+      const filtered = data?.currencies?.filter(c =>
+        POPULAR_CRYPTOS.includes(c?.toLowerCase())
+      );
 
-        setCurrencies(filtered.length ? filtered : popularCryptos);
-      } catch (err) {
-        console.error("Error loading currencies:", err);
-        setCurrencies(["btc", "eth", "usdt", "ltc"]);
+      if (isMounted) {
+        setCurrencies(filtered?.length ? filtered : POPULAR_CRYPTOS);
       }
-    };
+    } catch {
+      if (isMounted) setCurrencies(POPULAR_CRYPTOS);
+    } finally {
+      setTimeout(() => {
+        if (isMounted) setLoadingPage(false);
+      }, 200);
+    }
+  };
 
-    loadCurrencies();
-  }, []);
+  init();
 
-  /* ================= PRICE ESTIMATION (DEBOUNCE) ================= */
+  return () => {
+    isMounted = false;
+  };
+}, []);
+
+ 
+  /*  PRICE ESTIMATION (DEBOUNCE)   */
   useEffect(() => {
     const timer = setTimeout(() => {
       if (amount && parseFloat(amount) >= 10) {
@@ -95,7 +108,7 @@ export default function UserDeposit({ setActiveSubMenu, user }) {
     }
   };
 
-  /* ================= CREATE PAYMENT ================= */
+  /*  CREATE PAYMENT   */
   const handleCreatePayment = async () => {
     const parsedAmount = parseFloat(amount);
 
@@ -185,12 +198,20 @@ export default function UserDeposit({ setActiveSubMenu, user }) {
     }
   };
 
-  /* ================= HELPERS ================= */
+  /*  HELPERS   */
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+  if(loadingPage)
+  {
+    return(
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-orange-50">
+        <div className="w-16 h-16 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    )
+  }
 
   const cryptoIcons = {
     btc: "₿",

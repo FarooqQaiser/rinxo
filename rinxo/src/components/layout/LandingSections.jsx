@@ -61,7 +61,7 @@ const HeroSection = () => {
         >
           <Button
             btnName="Start Trading"
-            locationHref="/"
+            locationHref="/login"
             extraCss="flex items-center gap-2 px-8 py-3 rounded-lg"
             bgColour="bg-yellow-400"
             textColour="text-gray-900"
@@ -73,7 +73,7 @@ const HeroSection = () => {
 
           <Button
             btnName="Try Demo Account"
-            locationHref="/"
+            locationHref="/register"
             extraCss="px-8 py-3 rounded-lg border border-gray-700"
             bgColour="bg-gray-800"
             textColour="text-white"

@@ -19,8 +19,7 @@ const ManageFundsReport = ({ setShowReport, userId }) => {
   const itemsPerPage = 5;
 
   const sidebarItems = ["Withdrawal", "Deposit", "Payments", "Transaction"];
-
-  /* ------------------ FETCH DATA ------------------ */
+  
   useEffect(() => {
     const fetchWithdrawals = async () => {
       try {
