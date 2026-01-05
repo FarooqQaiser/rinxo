@@ -27,8 +27,7 @@ export default function MainContent({
     
       useEffect(() => {
         const fetchUser = async () => {
-          const data = await specificData(userData._id);
-          console.log(data.data)
+          const data = await specificData(userData._id); 
           setUsers(data.data);
         };
         fetchUser();

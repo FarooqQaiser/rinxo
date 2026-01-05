@@ -39,10 +39,15 @@ const VerificationRoute = ({ children, setActiveSubMenu }) => {
     const timer = setTimeout(() => {
       fetchUser();
     }, 100);
-    return () => clearTimeout(timer)
+    return () => clearTimeout(timer);
   }, [user]);
 
-  if (loading) return <div>Loading...</div>;
+  if (loading)
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-yellow-50 to-orange-50">
+        <div className="w-16 h-16 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
   if (!isAuth) return <Navigate to="/login" replace />;
 
   // 🚫 Block inactive users

@@ -17,6 +17,7 @@ export default function UserWithdraw({ setActiveSubMenu, user }) {
   const [withdrawMethod, setWithdrawMethod] = useState("bank");
   const [balance, setBalance] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [loadingPage, setLoadingPage] = useState(true);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
   const [withdrawalData, setWithdrawalData] = useState(null);
@@ -40,20 +41,35 @@ export default function UserWithdraw({ setActiveSubMenu, user }) {
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
 
   useEffect(() => {
+    let isMounted = true
+    const fetchBalance = async () => {
+      try {
+        const response = await axios.get(`${API_URL}/payment/balance`, {
+          headers: { 'user-id': user._id }
+        }); 
+        if(isMounted)
+        {
+          setBalance(response.data.balance);
+        }
+        
+      } catch (err) {
+        console.error("Error fetching balance:", err);
+        setError("Failed to load balance");
+      } finally{
+        setTimeout(() => {
+          setLoadingPage(false)
+        }, 300);
+      }
+    };
+
     fetchBalance();
+
+    return ()=>{
+      isMounted = false
+    }
   }, []);
 
-  const fetchBalance = async () => {
-    try {
-      const response = await axios.get(`${API_URL}/payment/balance`, {
-        headers: { "user-id": user._id },
-      });
-      setBalance(response.data.balance);
-    } catch (err) {
-      console.error("Error fetching balance:", err);
-      setError("Failed to load balance");
-    }
-  };
+  
 
   const handleBankInputChange = (e) => {
     setBankDetails({
@@ -206,6 +222,15 @@ export default function UserWithdraw({ setActiveSubMenu, user }) {
     bnb: ["BEP20"],
     trx: ["TRC20"],
   };
+
+   if(loadingPage)
+  {
+    return(
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-orange-50">
+        <div className="w-16 h-16 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    )
+  }
 
   // Success Screen
   if (success && withdrawalData) {

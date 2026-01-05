@@ -20,15 +20,17 @@ export const verifyEmail = async (req, res) => {
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: "User not found!",
+        message: "User not found",
+      });
+    }
+    console.log(user)
+    if (user.isEmailVerified) {
+      return res.json({
+        success: true,
+        message: "Email already verified",
       });
     }
 
-    if (user.isEmailVerified) {
-      return res.json({
-        message: "Email already verified!",
-      });
-    }
 
     user.isEmailVerified = true;
     await user.save();
@@ -134,7 +136,7 @@ export const resendEmailVerification = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: "Email verification resent!",
+      message: "Verification email sent successfully!",
     });
   } catch (err) {
     return res.status(500).json({
@@ -158,6 +160,8 @@ export const loginUser = async (req, res) => {
     let user = email
       ? await User.findOne({ email })
       : await User.findOne({ phoneNumber });
+
+      console.log(user)
     if (!user)
       return res
         .status(404)
