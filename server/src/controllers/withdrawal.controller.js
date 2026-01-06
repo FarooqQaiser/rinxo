@@ -177,11 +177,11 @@ export const getUserWithdrawals = async (req, res) => {
 
   try {
     const userId = req.params.userId;
-
+console.log(userId)
     if (!userId) {
       return res.status(401).json({
         success: false,
-        message: "User id is required!",
+        message: "withdrawl id is required!",
       });
     }
 

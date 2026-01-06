@@ -51,7 +51,7 @@ export const getUserWithdrawals = async ({
   });
 
   const result = await response.data;
-
+ 
   return result.data;
 };
 

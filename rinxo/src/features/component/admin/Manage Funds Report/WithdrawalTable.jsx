@@ -3,20 +3,14 @@ import { CiSaveUp2 } from "react-icons/ci";
 import Button from "../../../../components/common/Button/Button";
 
 export default function WithdrawalTable({
-  withdrawals,
-  isLoading,
-  setIsLoading,
+ data, formatAmount, StatusBadge
 }) {
-  const [dirtyRows, setDirtyRows] = useState(new Set());
+   const [dirtyRows, setDirtyRows] = useState(new Set());
   const [status, setStatus] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const formatAmount = (value) => {
-    if (value === null || value === undefined || isNaN(value)) return "0.00";
-    return Number(value).toFixed(2);
-  };
-
-  const updateWithdrawaStatus = async (status, withdrawId) => {
-    setIsLoading(false);
+  const updateWithdrawalStatus = async (status, withdrawId) => {
+    setIsLoading(true);
     try {
       const response = await fetch(
         `http://localhost:8000/api/withdrawal/${withdrawId}`,
@@ -36,10 +30,11 @@ export default function WithdrawalTable({
 
       const result = await response.json();
       console.log("result: ", result);
-      setIsLoading(true);
+      window.location.reload();
     } catch (err) {
       console.error(`Server Error! ${err}`);
-      setIsLoading(true);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -70,80 +65,69 @@ export default function WithdrawalTable({
       return updated;
     });
 
-    updateWithdrawaStatus(status, id);
+    updateWithdrawalStatus(status, id);
   };
 
   return (
-    <div className="min-w-200">
-      <h2 className="text-xl font-semibold mb-4">Withdrawal Table</h2>
-
-      <table className="w-full text-left">
-        <thead className="border-b-2 border-gray-200 bg-gray-50">
+    <div className="overflow-x-auto">
+      <table className="w-full">
+        <thead className="bg-gray-50 border-b border-gray-200">
           <tr>
-            <th className="py-3 px-4">ID</th>
-            <th className="py-3 px-4">Method</th>
-            <th className="py-3 px-4">Account Name</th>
-            <th className="py-3 px-4">Bank Name</th>
-            <th className="py-3 px-4">Account Number</th>
-            <th className="py-3 px-4">Routing Number</th>
-            <th className="py-3 px-4">Swift Code</th>
-            <th className="py-3 px-4">Currency</th>
-            <th className="py-3 px-4">Amount</th>
-            <th className="py-3 px-4">Processing Fee</th>
-            <th className="py-3 px-4">Net Amount</th>
-            <th className="py-3 px-4">Status</th>
-            <th className="py-3 px-4">Actions</th>
+            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 uppercase">ID</th>
+            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 uppercase">Account Details</th>
+            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 uppercase">Bank Info</th>
+            <th className="text-right py-3 px-4 text-xs font-semibold text-gray-600 uppercase">Amount</th>
+            <th className="text-right py-3 px-4 text-xs font-semibold text-gray-600 uppercase">Fee</th>
+            <th className="text-right py-3 px-4 text-xs font-semibold text-gray-600 uppercase">Net Amount</th>
+            <th className="text-center py-3 px-4 text-xs font-semibold text-gray-600 uppercase">Status</th>
+            <th className="text-center py-3 px-4 text-xs font-semibold text-gray-600 uppercase">Actions</th>
           </tr>
         </thead>
-
-        <tbody>
-          {withdrawals?.map((withdrawal, index) => (
-            <tr
-              key={index}
-              className="border-b border-gray-100 hover:bg-gray-50"
-            >
-              <td className="py-4 px-4">{index + 1}</td>
-              <td className="py-4 px-4">{withdrawal.method}</td>
-              <td className="py-4 px-4">{withdrawal.details.accountName}</td>
-              <td className="py-4 px-4">{withdrawal.details.bankName}</td>
-              <td className="py-4 px-4">{withdrawal.details.accountNumber}</td>
-              <td className="py-4 px-4">{withdrawal.details.routingNumber}</td>
-              <td className="py-4 px-4">{withdrawal.details.swiftCode}</td>
-              <td className="py-4 px-4">{withdrawal.currency}</td>
-              <td className="py-4 px-4">{formatAmount(withdrawal.amount)}</td>
+        <tbody className="divide-y divide-gray-100">
+          {data?.map((w, i) => (
+            <tr key={i} className="hover:bg-gray-50 transition-colors">
+              <td className="py-4 px-4 text-sm text-gray-900">#{i + 1}</td>
               <td className="py-4 px-4">
-                {formatAmount(withdrawal.processing_fee)}
+                <div className="text-sm font-medium text-gray-900">{w.details.accountName}</div>
+                <div className="text-xs text-gray-500">{w.details.accountNumber}</div>
               </td>
               <td className="py-4 px-4">
-                {formatAmount(withdrawal.net_amount)}
+                <div className="text-sm text-gray-900">{w.details.bankName}</div>
+                <div className="text-xs text-gray-500">SWIFT: {w.details.swiftCode}</div>
               </td>
-              <td className="py-4 px-4">{withdrawal.status}</td>
-
-              <td className="mt-4 py-4 px-4 flex gap-2 justify-center items-center">
-                {withdrawal.status === "pending" && (
-                  <>
-                    <select
-                      onChange={(e) => handleWithdrawStatusChange(e, index)}
-                      className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-yellow-400"
+              <td className="py-4 px-4 text-right text-sm font-medium text-gray-900">
+                {w.currency} {formatAmount(w.amount)}
+              </td>
+              <td className="py-4 px-4 text-right text-sm text-gray-600">
+                {formatAmount(w.processing_fee)}
+              </td>
+              <td className="py-4 px-4 text-right text-sm font-semibold text-green-600">
+                {formatAmount(w.net_amount)}
+              </td>
+              <td className="py-4 px-4 text-center">
+                <StatusBadge status={w.status} />
+              </td>
+              <td className="py-4 px-4 text-center">
+                {w.status === "pending" && (
+                  <div className="flex gap-2 justify-center items-center">
+                    <select 
+                      onChange={(e) => handleWithdrawStatusChange(e, i)}
+                      className="px-3 py-1 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400"
                     >
-                      <option value="">Select</option>
-                      <option value="completed">Completed</option>
-                      <option value="cancelled">Cancelled</option>
+                      <option value="">Action</option>
+                      <option value="completed">Approve</option>
+                      <option value="cancelled">Reject</option>
                     </select>
-
-                    {dirtyRows.has(index) && (
-                      <Button
-                        onClick={() => handleSave(index, withdrawal._id)}
-                        extraCss="px-4 py-2 rounded-lg flex items-center gap-2 cursor-pointer"
-                        bgColour="bg-yellow-400"
-                        textColour="text-black"
-                        hoverBgColour="hover:bg-yellow-500"
+                    {dirtyRows.has(i) && (
+                      <button
+                        onClick={() => handleSave(i, w._id)}
                         disabled={isLoading}
+                        className="px-3 py-1 bg-yellow-400 text-gray-900 rounded-lg hover:bg-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed font-medium text-sm"
                       >
-                        <CiSaveUp2 size={18} />
-                      </Button>
+                        Save
+                      </button>
                     )}
-                  </>
+                  </div>
                 )}
               </td>
             </tr>
