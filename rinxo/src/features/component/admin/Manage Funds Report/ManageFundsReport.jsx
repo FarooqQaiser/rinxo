@@ -209,7 +209,7 @@
 
 // export default ManageFundsReport;
 
- import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowLeft, Download, RefreshCw, Filter, Search } from "lucide-react";
 import DepositTable from "./DepositTable";
 import WithdrawalTable from "./WithdrawalTable";
@@ -234,16 +234,16 @@ const ManageFundsReport = ({ setShowReport, userId }) => {
     { name: "Withdrawals", count: withdrawals.length },
     { name: "Deposits", count: deposits.length },
     { name: "Payments", count: payments.length },
-    { name: "Transactions", count: transactions.length }
+    { name: "Transactions", count: transactions.length },
   ];
- console.log(userId)
+
   useEffect(() => {
     // Fetch Withdrawals
     const fetchWithdrawals = async () => {
       try {
-        const response = await getUserWithdrawals({userId})
- 
-        console.log(response)
+        const response = await getUserWithdrawals({ userId });
+
+        // console.log(response);
         setWithdrawals(response || []);
       } catch (err) {
         console.error("Error Fetching Withdrawals:", err);
@@ -307,11 +307,16 @@ const ManageFundsReport = ({ setShowReport, userId }) => {
 
   const getActiveData = () => {
     switch (activeTab) {
-      case 0: return withdrawals;
-      case 1: return deposits;
-      case 2: return payments;
-      case 3: return transactions;
-      default: return [];
+      case 0:
+        return withdrawals;
+      case 1:
+        return deposits;
+      case 2:
+        return payments;
+      case 3:
+        return transactions;
+      default:
+        return [];
     }
   };
 
@@ -320,8 +325,13 @@ const ManageFundsReport = ({ setShowReport, userId }) => {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedData = activeData.slice(startIndex, startIndex + itemsPerPage);
 
-  const handleNext = () => setCurrentPage((prev) => Math.min(prev + 1, totalPages));
-  const handlePrev = () => setCurrentPage((prev) => Math.max(prev - 1, 1));
+  const handleNext = () => {
+    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+  };
+
+  const handlePrev = () => {
+    setCurrentPage((prev) => Math.max(prev - 1, 1));
+  };
 
   const formatAmount = (value) => {
     if (value === null || value === undefined || isNaN(value)) return "0.00";
@@ -333,13 +343,41 @@ const ManageFundsReport = ({ setShowReport, userId }) => {
       completed: "bg-green-100 text-green-700 border-green-200",
       pending: "bg-yellow-100 text-yellow-700 border-yellow-200",
       cancelled: "bg-red-100 text-red-700 border-red-200",
-      failed: "bg-red-100 text-red-700 border-red-200"
+      failed: "bg-red-100 text-red-700 border-red-200",
     };
     return (
-      <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${colors[status] || "bg-gray-100 text-gray-700 border-gray-200"}`}>
+      <span
+        className={`px-3 py-1 rounded-full text-xs font-semibold border ${
+          colors[status] || "bg-gray-100 text-gray-700 border-gray-200"
+        }`}
+      >
         {status?.toUpperCase()}
       </span>
     );
+  };
+
+  const handleExportButton = async () => {
+    try {
+      const response = await fetch(
+        `http://localhost:8000/api/user/admin/export-user-report/${userId}`,
+        {
+          method: "GET",
+          credentials: "include",
+        }
+      );
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "user-report.pdf";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    } catch (err) {
+      console.error("Error exporting user report: ", err);
+    }
   };
 
   return (
@@ -356,15 +394,22 @@ const ManageFundsReport = ({ setShowReport, userId }) => {
               <span className="font-medium">Back</span>
             </button>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Financial Reports</h1>
-              <p className="text-sm text-gray-500">Manage user transactions and withdrawals</p>
+              <h1 className="text-2xl font-bold text-gray-900">
+                Financial Reports
+              </h1>
+              <p className="text-sm text-gray-500">
+                Manage user transactions and withdrawals
+              </p>
             </div>
           </div>
           <div className="flex gap-2">
             <button className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
               <RefreshCw size={20} />
             </button>
-            <button className="flex items-center gap-2 px-4 py-2 bg-yellow-400 text-gray-900 rounded-lg hover:bg-yellow-500 transition-colors font-medium">
+            <button
+              className="flex items-center gap-2 px-4 py-2 bg-yellow-400 text-gray-900 rounded-lg hover:bg-yellow-500 transition-colors font-medium"
+              onClick={handleExportButton}
+            >
               <Download size={18} />
               Export
             </button>
@@ -387,11 +432,13 @@ const ManageFundsReport = ({ setShowReport, userId }) => {
                 }`}
               >
                 <span>{item.name}</span>
-                <span className={`text-xs px-2 py-1 rounded-full ${
-                  activeTab === index
-                    ? "bg-yellow-500 text-gray-900"
-                    : "bg-gray-100 text-gray-600 group-hover:bg-gray-200"
-                }`}>
+                <span
+                  className={`text-xs px-2 py-1 rounded-full ${
+                    activeTab === index
+                      ? "bg-yellow-500 text-gray-900"
+                      : "bg-gray-100 text-gray-600 group-hover:bg-gray-200"
+                  }`}
+                >
                   {item.count}
                 </span>
               </button>
@@ -405,7 +452,10 @@ const ManageFundsReport = ({ setShowReport, userId }) => {
           <div className="bg-white border-b border-gray-200 px-6 py-4">
             <div className="flex gap-4">
               <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                <Search
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                  size={20}
+                />
                 <input
                   type="text"
                   placeholder="Search transactions..."
@@ -424,10 +474,35 @@ const ManageFundsReport = ({ setShowReport, userId }) => {
           {/* Table Content */}
           <div className="flex-1 overflow-auto p-6">
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-              {activeTab === 0 && <WithdrawalTable data={paginatedData} formatAmount={formatAmount} StatusBadge={StatusBadge} />}
-              {activeTab === 1 && <DepositTable data={paginatedData} formatAmount={formatAmount} />}
-              {activeTab === 2 && <PaymentsTable data={paginatedData} formatAmount={formatAmount} StatusBadge={StatusBadge} />}
-              {activeTab === 3 && <TransactionTable data={paginatedData} formatAmount={formatAmount} StatusBadge={StatusBadge} />}
+              {activeTab === 0 && (
+                <WithdrawalTable
+                  data={paginatedData}
+                  formatAmount={formatAmount}
+                  StatusBadge={StatusBadge}
+                  setIsLoading={setIsLoading}
+                  isLoading={isLoading}
+                />
+              )}
+              {activeTab === 1 && (
+                <DepositTable
+                  data={paginatedData}
+                  formatAmount={formatAmount}
+                />
+              )}
+              {activeTab === 2 && (
+                <PaymentsTable
+                  data={paginatedData}
+                  formatAmount={formatAmount}
+                  StatusBadge={StatusBadge}
+                />
+              )}
+              {activeTab === 3 && (
+                <TransactionTable
+                  data={paginatedData}
+                  formatAmount={formatAmount}
+                  StatusBadge={StatusBadge}
+                />
+              )}
             </div>
           </div>
 
@@ -436,8 +511,11 @@ const ManageFundsReport = ({ setShowReport, userId }) => {
             <div className="flex justify-between items-center">
               <p className="text-sm text-gray-600">
                 Showing <span className="font-medium">{startIndex + 1}</span> to{" "}
-                <span className="font-medium">{Math.min(startIndex + itemsPerPage, activeData.length)}</span> of{" "}
-                <span className="font-medium">{activeData.length}</span> results
+                <span className="font-medium">
+                  {Math.min(startIndex + itemsPerPage, activeData.length)}
+                </span>{" "}
+                of <span className="font-medium">{activeData.length}</span>{" "}
+                results
               </p>
               <div className="flex gap-2">
                 <button
@@ -580,7 +658,7 @@ const ManageFundsReport = ({ setShowReport, userId }) => {
 //               <td className="py-4 px-4 text-center">
 //                 {w.status === "pending" && (
 //                   <div className="flex gap-2 justify-center items-center">
-//                     <select 
+//                     <select
 //                       onChange={(e) => handleWithdrawStatusChange(e, i)}
 //                       className="px-3 py-1 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400"
 //                     >
@@ -706,7 +784,7 @@ const ManageFundsReport = ({ setShowReport, userId }) => {
 //               {t.currency.toUpperCase()} {formatAmount(t.amount)}
 //             </td>
 //             <td className="py-4 px-4 text-sm text-gray-600">
-//               {t.status === "completed" 
+//               {t.status === "completed"
 //                 ? `${formatAmount(t.balance_before)} → ${formatAmount(t.balance_after)}`
 //                 : "N/A"
 //               }
