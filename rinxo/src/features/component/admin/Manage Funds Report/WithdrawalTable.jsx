@@ -1,13 +1,14 @@
 import { useState } from "react";
-import { CiSaveUp2 } from "react-icons/ci";
-import Button from "../../../../components/common/Button/Button";
 
 export default function WithdrawalTable({
- data, formatAmount, StatusBadge
+  data,
+  formatAmount,
+  StatusBadge,
+  isLoading,
+  setIsLoading,
 }) {
-   const [dirtyRows, setDirtyRows] = useState(new Set());
+  const [dirtyRows, setDirtyRows] = useState(new Set());
   const [status, setStatus] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
 
   const updateWithdrawalStatus = async (status, withdrawId) => {
     setIsLoading(true);
@@ -30,7 +31,7 @@ export default function WithdrawalTable({
 
       const result = await response.json();
       console.log("result: ", result);
-      window.location.reload();
+      setIsLoading(false);
     } catch (err) {
       console.error(`Server Error! ${err}`);
     } finally {
@@ -73,14 +74,30 @@ export default function WithdrawalTable({
       <table className="w-full">
         <thead className="bg-gray-50 border-b border-gray-200">
           <tr>
-            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 uppercase">ID</th>
-            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 uppercase">Account Details</th>
-            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 uppercase">Bank Info</th>
-            <th className="text-right py-3 px-4 text-xs font-semibold text-gray-600 uppercase">Amount</th>
-            <th className="text-right py-3 px-4 text-xs font-semibold text-gray-600 uppercase">Fee</th>
-            <th className="text-right py-3 px-4 text-xs font-semibold text-gray-600 uppercase">Net Amount</th>
-            <th className="text-center py-3 px-4 text-xs font-semibold text-gray-600 uppercase">Status</th>
-            <th className="text-center py-3 px-4 text-xs font-semibold text-gray-600 uppercase">Actions</th>
+            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 uppercase">
+              ID
+            </th>
+            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 uppercase">
+              Account Details
+            </th>
+            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 uppercase">
+              Bank Info
+            </th>
+            <th className="text-right py-3 px-4 text-xs font-semibold text-gray-600 uppercase">
+              Amount
+            </th>
+            <th className="text-right py-3 px-4 text-xs font-semibold text-gray-600 uppercase">
+              Fee
+            </th>
+            <th className="text-right py-3 px-4 text-xs font-semibold text-gray-600 uppercase">
+              Net Amount
+            </th>
+            <th className="text-center py-3 px-4 text-xs font-semibold text-gray-600 uppercase">
+              Status
+            </th>
+            <th className="text-center py-3 px-4 text-xs font-semibold text-gray-600 uppercase">
+              Actions
+            </th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100">
@@ -88,12 +105,20 @@ export default function WithdrawalTable({
             <tr key={i} className="hover:bg-gray-50 transition-colors">
               <td className="py-4 px-4 text-sm text-gray-900">#{i + 1}</td>
               <td className="py-4 px-4">
-                <div className="text-sm font-medium text-gray-900">{w.details.accountName}</div>
-                <div className="text-xs text-gray-500">{w.details.accountNumber}</div>
+                <div className="text-sm font-medium text-gray-900">
+                  {w.details.accountName}
+                </div>
+                <div className="text-xs text-gray-500">
+                  {w.details.accountNumber}
+                </div>
               </td>
               <td className="py-4 px-4">
-                <div className="text-sm text-gray-900">{w.details.bankName}</div>
-                <div className="text-xs text-gray-500">SWIFT: {w.details.swiftCode}</div>
+                <div className="text-sm text-gray-900">
+                  {w.details.bankName}
+                </div>
+                <div className="text-xs text-gray-500">
+                  SWIFT: {w.details.swiftCode}
+                </div>
               </td>
               <td className="py-4 px-4 text-right text-sm font-medium text-gray-900">
                 {w.currency} {formatAmount(w.amount)}
@@ -110,7 +135,7 @@ export default function WithdrawalTable({
               <td className="py-4 px-4 text-center">
                 {w.status === "pending" && (
                   <div className="flex gap-2 justify-center items-center">
-                    <select 
+                    <select
                       onChange={(e) => handleWithdrawStatusChange(e, i)}
                       className="px-3 py-1 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400"
                     >

@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 import User from "../models/User.model.js";
-import { Payment, Transaction } from "../models/payment.models.js";
+import Withdrawal, { Payment, Transaction } from "../models/payment.models.js";
+import PDFDocument from "pdfkit";
 
 export const uploadNICImages = async (req, res) => {
   try {
@@ -276,7 +277,6 @@ export const updateAdminProfile = async (req, res) => {
       });
     }
 
-
     const updateData = {};
 
     if (fullName) updateData.fullName = fullName;
@@ -425,5 +425,403 @@ export const showUserAndHisAllTransactions = async (req, res) => {
       success: false,
       message: `Server Error: ${err.message}`,
     });
+  }
+};
+
+const formatAmount = (value) => {
+  const num = Number(value);
+  if (value === null || value === undefined || Number.isNaN(num)) {
+    return "-";
+  }
+  return num.toFixed(2);
+};
+
+const drawTableHeader = (doc, headers, colX, colW, startY) => {
+  doc.font("Helvetica-Bold").fontSize(8);
+
+  const headerHeight = 14; // fixed header height
+  const textY = startY;
+
+  headers.forEach((h) => {
+    doc.text(h.label, colX[h.key], textY, {
+      width: colW[h.key] + 15,
+      align: "left",
+      lineBreak: false, // 🔴 PREVENT wrapping
+      ellipsis: true, // optional: trims overflow safely
+    });
+  });
+
+  // Draw underline BELOW header text (not overlapping)
+  const lineY = textY + headerHeight;
+
+  doc
+    .moveTo(40, lineY)
+    .lineTo(doc.page.width - 40, lineY)
+    .stroke();
+
+  doc.font("Helvetica");
+
+  // Return Y position for rows to start
+  return lineY + 6;
+};
+
+const getRowHeight = (doc, cells) => {
+  return Math.max(
+    ...cells.map((c) =>
+      doc.heightOfString(c.text || "-", {
+        width: c.width,
+        lineGap: 2,
+      })
+    )
+  );
+};
+
+export const exportUserReport = async (req, res) => {
+  let doc;
+
+  try {
+    const { userId } = req.params;
+    if (!userId) {
+      return res
+        .status(400)
+        .json({ success: false, message: "UserId required" });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
+
+    const withdrawals = await Withdrawal.find({ user_id: userId });
+    const transactions = await Transaction.find({ user_id: userId });
+    const payments = await Payment.find({ user_id: userId });
+    const deposits = transactions.filter(
+      (t) => t.type === "deposit" && t.status !== "pending"
+    );
+
+    if (!withdrawals.length && !transactions.length && !payments.length) {
+      return res
+        .status(404)
+        .json({ success: false, message: "No report data" });
+    }
+
+    doc = new PDFDocument({ margin: 40 });
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader(
+      "Content-Disposition",
+      "attachment; filename=user-report.pdf"
+    );
+    doc.pipe(res);
+
+    /* -------------------- TITLE -------------------- */
+
+    doc.fontSize(18).text("User Financial Report", { align: "center" });
+    doc.moveDown();
+
+    doc.fontSize(14).text("User Details");
+    doc
+      .fontSize(10)
+      .text(
+        `Name: ${user.fullName} | Email: ${user.email} | Phone: ${user.phoneNumber}`
+      );
+    doc.moveDown(1.5);
+
+    /* ==================== WITHDRAWALS ==================== */
+
+    doc.fontSize(14).text("Withdrawals");
+    doc.moveDown(0.5);
+
+    const wHeaders = [
+      { key: "id", label: "ID" },
+      { key: "account", label: "ACCOUNT DETAILS" },
+      { key: "bank", label: "BANK INFO" },
+      { key: "amount", label: "AMOUNT" },
+      { key: "fee", label: "FEE" },
+      { key: "net", label: "NET AMOUNT" },
+      { key: "status", label: "STATUS" },
+    ];
+
+    const wColX = {
+      id: 40,
+      account: 60,
+      bank: 180,
+      amount: 300,
+      fee: 350,
+      net: 400,
+      status: 470,
+    };
+    const wColW = {
+      id: 20,
+      account: 110,
+      bank: 110,
+      amount: 40,
+      fee: 40,
+      net: 60,
+      status: 70,
+    };
+
+    let y = doc.y;
+    drawTableHeader(doc, wHeaders, wColX, wColW, y);
+    y += 20;
+
+    withdrawals.forEach((w, i) => {
+      const cells = [
+        { text: String(i + 1), width: wColW.id },
+        {
+          text: `${w.details.accountName}\n${w.details.accountNumber}`,
+          width: wColW.account,
+        },
+        {
+          text: `${w.details.bankName}\n${w.details.swiftCode}`,
+          width: wColW.bank,
+        },
+        { text: formatAmount(w.amount), width: wColW.amount },
+        { text: formatAmount(w.processing_fee), width: wColW.fee },
+        { text: formatAmount(w.net_amount), width: wColW.net },
+        { text: w.status, width: wColW.status },
+      ];
+
+      const rowHeight = getRowHeight(doc, cells) + 6;
+      if (y + rowHeight > doc.page.height - 50) {
+        doc.addPage();
+        y = 50;
+        drawTableHeader(doc, wHeaders, wColX, wColW, y);
+        y += 20;
+      }
+
+      cells.forEach((cell, idx) => {
+        doc.text(cell.text, wColX[wHeaders[idx].key], y, {
+          width: cell.width,
+          lineGap: 2,
+        });
+      });
+
+      y += rowHeight;
+    });
+
+    doc.addPage();
+
+    /* ==================== DEPOSITS ==================== */
+
+    doc.fontSize(14).text("Deposits");
+    doc.moveDown(0.5);
+
+    const dHeaders = [
+      { key: "id", label: "ID" },
+      { key: "pid", label: "PAYMENT ID" },
+      { key: "amount", label: "AMOUNT" },
+      { key: "balance", label: "BALANCE CHANGE" },
+      { key: "desc", label: "DESCRIPTION" },
+      { key: "date", label: "DATE" },
+    ];
+
+    const dColX = {
+      id: 40,
+      pid: 60,
+      amount: 140,
+      balance: 190,
+      desc: 280,
+      date: 430,
+    };
+    const dColW = {
+      id: 20,
+      pid: 70,
+      amount: 40,
+      balance: 80,
+      desc: 140,
+      date: 100,
+    };
+
+    y = doc.y;
+    drawTableHeader(doc, dHeaders, dColX, dColW, y);
+    y += 20;
+
+    deposits.forEach((d, i) => {
+      const cells = [
+        { text: String(i + 1), width: dColW.id },
+        { text: d.payment_id, width: dColW.pid },
+        { text: formatAmount(d.amount), width: dColW.amount },
+        {
+          text: `${formatAmount(d.balance_before)} → ${formatAmount(
+            d.balance_after
+          )}`,
+          width: dColW.balance,
+        },
+        { text: d.description || "-", width: dColW.desc },
+        { text: new Date(d.created_at).toLocaleString(), width: dColW.date },
+      ];
+
+      const rowHeight = getRowHeight(doc, cells) + 6;
+      if (y + rowHeight > doc.page.height - 50) {
+        doc.addPage();
+        y = 50;
+        drawTableHeader(doc, dHeaders, dColX, dColW, y);
+        y += 20;
+      }
+
+      cells.forEach((cell, idx) => {
+        doc.text(cell.text, dColX[dHeaders[idx].key], y, {
+          width: cell.width,
+          lineGap: 2,
+        });
+      });
+
+      y += rowHeight;
+    });
+
+    doc.addPage();
+
+    /* ==================== PAYMENTS ==================== */
+
+    doc.fontSize(14).text("Payments");
+    doc.moveDown(0.5);
+
+    const pHeaders = [
+      { key: "id", label: "ID" },
+      { key: "pid", label: "PAYMENT ID" },
+      { key: "oid", label: "ORDER ID" },
+      { key: "amount", label: "AMOUNT" },
+      { key: "currency", label: "CURRENCY" },
+      { key: "status", label: "STATUS" },
+      { key: "date", label: "DATE" },
+    ];
+
+    const pColX = {
+      id: 40,
+      pid: 60,
+      oid: 150,
+      amount: 260,
+      currency: 310,
+      status: 360,
+      date: 430,
+    };
+    const pColW = {
+      id: 20,
+      pid: 80,
+      oid: 100,
+      amount: 40,
+      currency: 40,
+      status: 60,
+      date: 100,
+    };
+
+    y = doc.y;
+    drawTableHeader(doc, pHeaders, pColX, pColW, y);
+    y += 20;
+
+    payments.forEach((p, i) => {
+      const cells = [
+        { text: String(i + 1), width: pColW.id },
+        { text: p.payment_id, width: pColW.pid },
+        { text: p.order_id, width: pColW.oid },
+        { text: formatAmount(p.price_amount), width: pColW.amount },
+        { text: p.pay_currency?.toUpperCase(), width: pColW.currency },
+        { text: p.payment_status, width: pColW.status },
+        { text: new Date(p.created_at).toLocaleString(), width: pColW.date },
+      ];
+
+      const rowHeight = getRowHeight(doc, cells) + 6;
+      if (y + rowHeight > doc.page.height - 50) {
+        doc.addPage();
+        y = 50;
+        drawTableHeader(doc, pHeaders, pColX, pColW, y);
+        y += 20;
+      }
+
+      cells.forEach((cell, idx) => {
+        doc.text(cell.text, pColX[pHeaders[idx].key], y, {
+          width: cell.width,
+          lineGap: 2,
+        });
+      });
+
+      y += rowHeight;
+    });
+
+    /* ==================== TRANSACTIONS (✅ FIXED & ADDED) ==================== */
+    doc.addPage();
+    doc.fontSize(14).text("Transactions");
+    doc.moveDown(0.5);
+
+    const tHeaders = [
+      { key: "id", label: "ID" },
+      { key: "pid", label: "PAYMENT ID" },
+      { key: "type", label: "TYPE" },
+      { key: "amount", label: "AMOUNT" },
+      { key: "balance", label: "BALANCE CHANGE" },
+      { key: "status", label: "STATUS" },
+      { key: "date", label: "DATE" },
+    ];
+
+    const tColX = {
+      id: 40,
+      pid: 60,
+      type: 150,
+      amount: 210,
+      balance: 270,
+      status: 390,
+      date: 450,
+    };
+    const tColW = {
+      id: 20,
+      pid: 80,
+      type: 50,
+      amount: 60,
+      balance: 110,
+      status: 60,
+      date: 95,
+    };
+
+    y = doc.y;
+    drawTableHeader(doc, tHeaders, tColX, tColW, y);
+    y += 20;
+
+    transactions.forEach((t, i) => {
+      const cells = [
+        { text: String(i + 1), width: tColW.id },
+        { text: t.payment_id || "-", width: tColW.pid },
+        { text: t.type || "-", width: tColW.type },
+        {
+          text: `${formatAmount(t.amount)} ${t.currency?.toUpperCase() || ""}`,
+          width: tColW.amount,
+        },
+        {
+          text:
+            t.balance_before != null && t.balance_after != null
+              ? `${formatAmount(t.balance_before)} => ${formatAmount(
+                  t.balance_after
+                )}`
+              : "-",
+          width: tColW.balance,
+        },
+        { text: t.status || "-", width: tColW.status },
+        { text: new Date(t.created_at).toLocaleString(), width: tColW.date },
+      ];
+
+      const rowHeight = getRowHeight(doc, cells) + 6;
+
+      if (y + rowHeight > doc.page.height - 50) {
+        doc.addPage();
+        y = 50;
+        drawTableHeader(doc, tHeaders, tColX, tColW, y);
+        y += 20;
+      }
+
+      cells.forEach((cell, idx) => {
+        doc.text(cell.text, tColX[tHeaders[idx].key], y, {
+          width: cell.width,
+          lineGap: 2,
+        });
+      });
+
+      y += rowHeight;
+    });
+
+    doc.end();
+  } catch (err) {
+    console.error("PDF Export Error:", err);
+    if (doc) doc.destroy();
   }
 };
