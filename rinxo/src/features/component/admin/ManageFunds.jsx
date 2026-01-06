@@ -81,7 +81,7 @@ export default function ManageFunds() {
                     Balance
                   </th>
                   <th className="py-3 px-4 text-gray-600 font-semibold">
-                    Actions
+                    Report
                   </th>
                 </tr>
               </thead>
@@ -119,15 +119,15 @@ export default function ManageFunds() {
                       ${user.funds.toLocaleString()}
                     </td>
                     <td className="py-4 px-4">
-                      <div className="flex gap-2">
-                        <div className="flex gap-2">
-                          <button className="flex-1 text-green-500 hover:text-green-800    transition-colors ">
+                      <div className="flex">
+                        <div className="flex">
+                          {/* <button className="flex-1 text-green-500 hover:text-green-800    transition-colors ">
                             <Plus size={18} />
                           </button>
 
                           <button className="flex-1 text-red-500 hover:text-red-800   transition-colors  ">
                             <Minus size={18} />
-                          </button>
+                          </button> */}
 
                           <button
                             className="flex-1 text-orange-500 hover:text-orange-800  transition-colors  "
