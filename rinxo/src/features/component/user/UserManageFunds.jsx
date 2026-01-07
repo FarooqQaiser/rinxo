@@ -196,8 +196,10 @@ export default function UserManageFunds({ setActiveSubMenu, user }) {
                       tx.status === "completed"
                         ? tx.type === "deposit"
                           ? "text-green-700"
-                          : "text-red-500"
-                        : "text-yellow-600"
+                          : "text-red-600"
+                      : tx.status ==="pending"
+                        ? "text-yellow-600" : "text-red-600 underline"
+                        
                     }`}
                   >
                     {tx.type === "deposit" ? "+" : "-"}$

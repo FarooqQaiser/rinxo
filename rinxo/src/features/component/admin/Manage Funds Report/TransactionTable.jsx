@@ -1,4 +1,6 @@
-export default function TransactionTable({ data, formatAmount,StatusBadge }) {
+import StatusBadge from "./StatusBadge";
+
+export default function TransactionTable({ data, formatAmount }) {
    
 
   return (
