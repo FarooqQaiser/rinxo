@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ArrowLeft, Download, RefreshCw, Filter, Search } from "lucide-react";
+import { ArrowLeft, Download, RefreshCw, Filter, Search, Menu } from "lucide-react";
 import DepositTable from "./DepositTable";
 import WithdrawalTable from "./WithdrawalTable";
 import PaymentsTable from "./PaymentsTable";
@@ -140,26 +140,8 @@ const ManageFundsReport = ({ setShowReport, userId }) => {
   const formatAmount = (value) => {
     if (value === null || value === undefined || isNaN(value)) return "0.00";
     return Number(value).toFixed(2);
-  };
-
-  const StatusBadge = ({ status }) => {
-    const colors = {
-      completed: "bg-green-100 text-green-700 border-green-200",
-      pending: "bg-yellow-100 text-yellow-700 border-yellow-200",
-      cancelled: "bg-red-100 text-red-700 border-red-200",
-      failed: "bg-red-100 text-red-700 border-red-200",
-    };
-    return (
-      <span
-        className={`px-3 py-1 rounded-full text-xs font-semibold border ${
-          colors[status] || "bg-gray-100 text-gray-700 border-gray-200"
-        }`}
-      >
-        {status?.toUpperCase()}
-      </span>
-    );
-  };
-
+  }; 
+  
   const handleExportButton = async () => {
     try {
       const response = await fetch(
@@ -213,9 +195,9 @@ const ManageFundsReport = ({ setShowReport, userId }) => {
             </div>
           </div>
           <div className="flex gap-2">
-            <button className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+            {/* <button className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
               <RefreshCw size={20} />
-            </button>
+            </button> */}
             <button
               className="flex items-center gap-2 px-4 py-2 bg-yellow-400 text-gray-900 rounded-lg hover:bg-yellow-500 transition-colors font-medium"
               onClick={handleExportButton}
@@ -304,7 +286,7 @@ const ManageFundsReport = ({ setShowReport, userId }) => {
               
             </select>
 
-            <select
+            {/* <select
               // value={usersPerPage}
               // onChange={handleUsersPerPageChange}
               className="flex-1 sm:flex-none sm:w-24 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:outline-none"
@@ -313,14 +295,8 @@ const ManageFundsReport = ({ setShowReport, userId }) => {
               <option value={5}>5</option>
               <option value={10}>10</option>
               <option value={11}>All</option>
-            </select>
-
-            {/* <button
-              onClick={() => openModal("add")}
-              className="flex-1 sm:flex-none bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold px-4 py-2 rounded-lg flex items-center justify-center gap-2 transition-colors text-sm"
-            >
-              <Plus size={18} /> Add User
-            </button> */}
+            </select> */}
+            
           </div>
 
             }
