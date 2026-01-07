@@ -569,19 +569,29 @@ export const exportUserReport = async (req, res) => {
     withdrawals.forEach((w, i) => {
       const cells = [
         { text: String(i + 1), width: wColW.id },
+
         {
-          text: `${w.details.accountName}\n${w.details.accountNumber}`,
+          text:
+            w.method === "crypto"
+              ? `Currency: ${w.details.currency}\n${w.details.walletAddress}`
+              : `${w.details.accountName}\n Acc: ${w.details.accountNumber}`,
           width: wColW.account,
         },
+
         {
-          text: `${w.details.bankName}\n${w.details.swiftCode}`,
+          text: 
+            w.method === "crypto"
+              ? `Network: ${w.details.network}`
+              : `${w.details.bankName}\n SWIFT: ${w.details.swiftCode}\n Routing: ${w.details.routingNumber}`,
           width: wColW.bank,
         },
+
         { text: formatAmount(w.amount), width: wColW.amount },
         { text: formatAmount(w.processing_fee), width: wColW.fee },
         { text: formatAmount(w.net_amount), width: wColW.net },
         { text: w.status, width: wColW.status },
       ];
+
 
       const rowHeight = getRowHeight(doc, cells) + 6;
       if (y + rowHeight > doc.page.height - 50) {
