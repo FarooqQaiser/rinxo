@@ -25,8 +25,7 @@ export default function WithdrawalTable({ data, formatAmount }) {
         throw new Error(`HTTP ERROR! Status: ${response.status}`);
       }
 
-      const result = await response.json();
-      console.log("result: ", result);
+      const result = await response.json(); 
       setIsLoading(false);
     } catch (err) {
       console.error(`Server Error! ${err}`);
