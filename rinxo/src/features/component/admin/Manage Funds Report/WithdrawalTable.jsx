@@ -27,7 +27,7 @@ export default function WithdrawalTable({ data, formatAmount }) {
 
       const result = await response.json();
       console.log("result: ", result);
-      window.location.reload();
+      setIsLoading(false);
     } catch (err) {
       console.error(`Server Error! ${err}`);
     } finally {
@@ -158,7 +158,7 @@ export default function WithdrawalTable({ data, formatAmount }) {
               <td className="py-4 px-4">
                 {w.status === "pending" && (
                   <div className="flex gap-2 justify-center items-center">
-                    <select 
+                    <select
                       onChange={(e) => handleWithdrawStatusChange(e, i)}
                       value={rowStatuses[i] || ""}
                       className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"

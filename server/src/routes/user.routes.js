@@ -3,6 +3,7 @@ import { uploadNIC } from "../middlewares/upload.middleware.js";
 import {
   activateUser,
   deleteUser,
+  exportUserReport,
   showAllPayments,
   showAllUsers,
   showloggedInAdminData,
@@ -13,6 +14,7 @@ import {
   uploadNICImages,
 } from "../controllers/user.controller.js";
 import { protect } from "../middlewares/auth.middlerware.js";
+import Withdrawal, { Payment, Transaction } from "../models/payment.models.js";
 
 const router = express.Router();
 
@@ -33,6 +35,7 @@ router.get(
   protect,
   showUserAndHisAllTransactions
 );
+router.get("/admin/export-user-report/:userId", protect, exportUserReport);
 
 // user
 router.get("/userData/:userId", protect, showSingleUser);

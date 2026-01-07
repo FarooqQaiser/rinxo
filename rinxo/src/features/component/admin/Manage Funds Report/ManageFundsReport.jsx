@@ -1,12 +1,5 @@
 import { useEffect, useState } from "react";
-import {
-  ArrowLeft,
-  Download,
-  RefreshCw,
-  Filter,
-  Search,
-  Menu,
-} from "lucide-react";
+import { ArrowLeft, Download, RefreshCw, Filter, Search } from "lucide-react";
 import DepositTable from "./DepositTable";
 import WithdrawalTable from "./WithdrawalTable";
 import PaymentsTable from "./PaymentsTable";
@@ -37,9 +30,7 @@ const ManageFundsReport = ({ setShowReport, userId }) => {
     // Fetch Withdrawals
     const fetchWithdrawals = async () => {
       try {
-        const response = await getUserWithdrawals({ userId });
-
-        console.log(response);
+        const response = await getUserWithdrawals({ userId }); 
         setWithdrawals(response || []);
       } catch (err) {
         console.error("Error Fetching Withdrawals:", err);
@@ -151,6 +142,48 @@ const ManageFundsReport = ({ setShowReport, userId }) => {
     return Number(value).toFixed(2);
   };
 
+  const StatusBadge = ({ status }) => {
+    const colors = {
+      completed: "bg-green-100 text-green-700 border-green-200",
+      pending: "bg-yellow-100 text-yellow-700 border-yellow-200",
+      cancelled: "bg-red-100 text-red-700 border-red-200",
+      failed: "bg-red-100 text-red-700 border-red-200",
+    };
+    return (
+      <span
+        className={`px-3 py-1 rounded-full text-xs font-semibold border ${
+          colors[status] || "bg-gray-100 text-gray-700 border-gray-200"
+        }`}
+      >
+        {status?.toUpperCase()}
+      </span>
+    );
+  };
+
+  const handleExportButton = async () => {
+    try {
+      const response = await fetch(
+        `http://localhost:8000/api/user/admin/export-user-report/${userId}`,
+        {
+          method: "GET",
+          credentials: "include",
+        }
+      );
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "user-report.pdf";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    } catch (err) {
+      console.error("Error exporting user report: ", err);
+    }
+  };
+
   return (
     <div className="flex flex-col h-screen bg-gray-50">
       {/* Header */}
@@ -183,7 +216,10 @@ const ManageFundsReport = ({ setShowReport, userId }) => {
             <button className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
               <RefreshCw size={20} />
             </button>
-            <button className="flex items-center gap-2 px-4 py-2 bg-yellow-400 text-gray-900 rounded-lg hover:bg-yellow-500 transition-colors font-medium">
+            <button
+              className="flex items-center gap-2 px-4 py-2 bg-yellow-400 text-gray-900 rounded-lg hover:bg-yellow-500 transition-colors font-medium"
+              onClick={handleExportButton}
+            >
               <Download size={18} />
               Export
             </button>
