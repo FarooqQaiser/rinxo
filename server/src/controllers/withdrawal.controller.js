@@ -3,7 +3,7 @@ import {
   UserBalance,
   Transaction,
 } from "../models/payment.models.js";
-import User from "../models/User.model.js";
+import User from "../models/User.model.js"; 
 
 // ================= CREATE WITHDRAWAL REQUEST =================
 export const createWithdrawal = async (req, res) => {
@@ -149,35 +149,9 @@ export const createWithdrawal = async (req, res) => {
 };
 
 // ================= GET USER WITHDRAWALS =================
-export const getUserWithdrawals = async (req, res) => {
-  // try {
-  //   const { limit = 10, page = 0, status } = req.query;
-  //   const userId = req.params.userId;
-
-  //   const query = { user_id: userId };
-  //   if (status) query.status = status;
-
-  //   const withdrawals = await Withdrawal.find(query)
-  //     .sort({ created_at: -1 })
-  //     .limit(Number(limit))
-  //     .skip(Number(page) * Number(limit));
-
-  //   const total = await Withdrawal.countDocuments(query);
-
-  //   res.status(200).json({
-  //     withdrawals,
-  //     total,
-  //     page: Number(page),
-  //     limit: Number(limit),
-  //     totalPages: Math.ceil(total / limit),
-  //   });
-  // } catch (err) {
-  //   res.status(500).json({ error: err.message });
-  // }
-
+export const getUserWithdrawals = async (req, res) => { 
   try {
-    const userId = req.params.userId;
-console.log(userId)
+    const userId = req.params.userId; 
     if (!userId) {
       return res.status(401).json({
         success: false,
@@ -415,54 +389,403 @@ export const getWithdrawalStats = async (req, res) => {
 };
 
 // ================= UPDATE USER WITHDRAWAL STATUS =================
+
+
+// export const updateUserWithdrawalStatus = async (req, res) => {
+//   try {
+//     const userId = req.user._id;
+//     console.log("userId: ", userId);
+//     const { withdrawId } = req.params;
+//     const { status } = req.body;
+
+//     const allowedStatuses = ["pending", "completed", "cancelled"];
+
+//     if (!withdrawId || !status) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "withdrawId and status are required",
+//       });
+//     }
+
+//     if (!allowedStatuses.includes(status)) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Invalid withdrawal status",
+//       });
+//     }
+
+//     const withdrawal = await Withdrawal.findById(withdrawId);
+
+//     if (!withdrawal) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "Withdrawal not found",
+//       });
+//     }
+
+//     if (
+//       withdrawal.user_id.toString() !== userId.toString() &&
+//       req.user.role !== "admin"
+//     ) {
+//       return res.status(403).json({
+//         success: false,
+//         message: "Not authorized",
+//       });
+//     }
+
+//     if (withdrawal.status === status) {
+//       return res.status(400).json({
+//         success: false,
+//         message: `Already ${status}`,
+//       });
+//     }
+
+//     const previousStatus = withdrawal.status;
+//     withdrawal.status = status;
+//     await withdrawal.save();
+
+//     const transaction = await Transaction.findOneAndUpdate(
+//       { payment_id: withdrawal.withdrawal_id },
+//       { status },
+//       { new: true }
+//     );
+
+//       if (!transaction) {
+//         return res.status(404).json({
+//           success: false,
+//           message: "Transaction not found",
+//         });
+//       } 
+  
+//       if (status === "cancelled" && previousStatus !== "cancelled") {
+//         const balanceUserId = withdrawal.user_id;
+
+//       const userBalance = await UserBalance.findOne({
+//         user_id: balanceUserId,
+//       });
+
+//       const user = await User.findById(balanceUserId); 
+//       console.log("userBalance: ", userBalance);
+//       console.log("user: ", user);
+//       if (!user) {
+//         return res.status(404).json({
+//           success: false,
+//           message: "User not found",
+//         });
+//       }
+
+//       if (!userBalance) {
+//         return res.status(404).json({
+//           success: false,
+//           message: "userBalance not found",
+//         });
+//       }
+
+//       userBalance.balance += withdrawal.amount;
+//       user.funds += withdrawal.amount;
+
+//       await Promise.all([
+//         userBalance.save(),
+//         user.save(),
+//       ]);
+//     }
+
+
+//     return res.status(200).json({
+//       success: true,
+//       message: "Withdrawal status updated",
+//       data: withdrawal,
+//     });
+
+//   } catch (err) {
+//     return res.status(500).json({
+//       success: false,
+//       message: err.message,
+//     });
+//   }
+// };
+
+
+// export const updateUserWithdrawalStatus = async (req, res) => {
+//   try {
+//     const userId = req.user._id;
+//     console.log("userId: ", userId);
+//     const { withdrawId } = req.params;
+//     const { status } = req.body;
+
+//     const allowedStatuses = ["pending", "completed", "cancelled"];
+
+//     if (!withdrawId || !status) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "withdrawId and status are required",
+//       });
+//     }
+
+//     if (!allowedStatuses.includes(status)) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Invalid withdrawal status",
+//       });
+//     }
+
+//     const withdrawal = await Withdrawal.findById(withdrawId);
+
+//     if (!withdrawal) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "Withdrawal not found",
+//       });
+//     }
+
+//     if (
+//       withdrawal.user_id.toString() !== userId.toString() &&
+//       req.user.role !== "admin"
+//     ) {
+//       return res.status(403).json({
+//         success: false,
+//         message: "Not authorized",
+//       });
+//     }
+
+//     if (withdrawal.status === status) {
+//       return res.status(400).json({
+//         success: false,
+//         message: `Already ${status}`,
+//       });
+//     }
+
+//     const previousStatus = withdrawal.status;
+//     withdrawal.status = status;
+//     await withdrawal.save();
+
+//     const transaction = await Transaction.findOneAndUpdate(
+//       { payment_id: withdrawal.withdrawal_id },
+//       { status },
+//       { balance_before: transaction.balance_after },
+//       { balance_after: withdrawal.amount },
+//       { description: `Withdrawal Reversed of ${withdrawal.amount}` },
+//       { updated_at: new Date() },
+//       { new: true }
+//     );
+
+//       if (!transaction) {
+//         return res.status(404).json({
+//           success: false,
+//           message: "Transaction not found",
+//         });
+//       } 
+  
+//       if (status === "cancelled" && previousStatus !== "cancelled") {
+//         const balanceUserId = withdrawal.user_id;
+
+//           const userBalance = await UserBalance.findOne({
+//             user_id: balanceUserId,
+//           });
+
+//           const user = await User.findById(balanceUserId); 
+//           console.log("userBalance: ", userBalance);
+//           console.log("user: ", user);
+//           if (!user) {
+//             return res.status(404).json({
+//               success: false,
+//               message: "User not found",
+//             });
+//           }
+
+//           if (!userBalance) {
+//             return res.status(404).json({
+//               success: false,
+//               message: "userBalance not found",
+//             });
+//           }
+
+//           userBalance.balance += withdrawal.amount;
+//           user.funds += withdrawal.amount;
+
+//           await Promise.all([
+//             userBalance.save(),
+//             user.save(),
+//           ]);
+//       }else if (status === "completed" && previousStatus !== "completed") {
+      
+//       }
+
+
+//     return res.status(200).json({
+//       success: true,
+//       message: "Withdrawal status updated",
+//       data: withdrawal,
+//     });
+
+//   } catch (err) {
+//     return res.status(500).json({
+//       success: false,
+//       message: err.message,
+//     });
+//   }
+// };
+
 export const updateUserWithdrawalStatus = async (req, res) => {
   try {
     const userId = req.user._id;
-    const withdrawId = req.params.withdrawId;
+    console.log("userId: ", userId);
+    const { withdrawId } = req.params;
     const { status } = req.body;
 
-    if (!userId || !withdrawId) {
-      return res.status(401).json({
+    const allowedStatuses = ["pending", "completed", "cancelled"];
+
+    if (!withdrawId || !status) {
+      return res.status(400).json({
         success: false,
-        message: "Send user and withdraw Id in params!",
+        message: "withdrawId and status are required",
       });
     }
 
-    const withdrawal = await Withdrawal.findByIdAndUpdate(
-      withdrawId,
-      { $set: { status } },
-      { new: true }
-    );
+    if (!allowedStatuses.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid withdrawal status",
+      });
+    }
 
+    const withdrawal = await Withdrawal.findById(withdrawId);
+    console.log("withdrawal: ", withdrawal);
     if (!withdrawal) {
       return res.status(404).json({
         success: false,
-        message: `Withdrawal with id: ${withdrawId} is not found!`,
+        message: "Withdrawal not found",
       });
     }
 
-    const transaction = await Transaction.findOneAndUpdate(
-      { payment_id: withdrawal.withdrawal_id },
-      { $set: { status } },
-      { new: true }
-    );
+    if (
+      req.user.role !== "admin"
+    ) {
+      return res.status(403).json({
+        success: false,
+        message: "Not authorized",
+      });
+    }
+
+    if (withdrawal.status === status) {
+      return res.status(400).json({
+        success: false,
+        message: `Already ${status}`,
+      });
+    }
+
+    const previousStatus = withdrawal.status;
+
+    // Find the transaction before updating
+    const transaction = await Transaction.findOne({ 
+      payment_id: withdrawal.withdrawal_id 
+    });
 
     if (!transaction) {
       return res.status(404).json({
         success: false,
-        message: `Transaction with id: ${withdrawId} is not found!`,
+        message: "Transaction not found",
       });
+    }
+
+    // Handle cancellation - refund the amount
+    if (status === "cancelled" && previousStatus !== "cancelled") {
+      const balanceUserId = withdrawal.user_id;
+
+      const userBalance = await UserBalance.findOne({
+        user_id: balanceUserId,
+      });
+
+      const user = await User.findById( balanceUserId);
+
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: "User not found",
+        });
+      }
+
+      if (!userBalance) {
+        return res.status(404).json({
+          success: false,
+          message: "User balance not found",
+        });
+      }
+
+      console.log("userBalance: ", userBalance);
+      console.log("user: ", user);
+
+      // Calculate new balance
+      const balanceBefore = userBalance.balance;
+      const balanceAfter = balanceBefore + withdrawal.amount;
+
+      // Update transaction record
+      await Transaction.findOneAndUpdate(
+        { payment_id: withdrawal.withdrawal_id },
+        {
+          status,
+          balance_before: balanceBefore,
+          balance_after: balanceAfter,
+          description: `Withdrawal Reversed of ${withdrawal.amount}`,
+          updated_at: new Date()
+        },
+        { new: true }
+      );
+
+      // Update balances
+      userBalance.balance += withdrawal.amount;
+      user.funds += withdrawal.amount;
+
+      // Update withdrawal status
+      withdrawal.status = status;
+
+      // Save all changes
+      await Promise.all([
+        userBalance.save(), 
+        user.save(), 
+        withdrawal.save()
+      ]);
+
+    } else if (status === "completed" && previousStatus !== "completed") {
+      // Update transaction status for completed withdrawal
+      await Transaction.findOneAndUpdate(
+        { payment_id: withdrawal.withdrawal_id },
+        {
+          status,
+          updated_at: new Date()
+        },
+        { new: true }
+      );
+
+      // Update withdrawal status
+      withdrawal.status = status;
+      await withdrawal.save();
+
+    } else {
+      // For other status changes (e.g., pending)
+      await Transaction.findOneAndUpdate(
+        { payment_id: withdrawal.withdrawal_id },
+        {
+          status,
+          updated_at: new Date()
+        },
+        { new: true }
+      );
+
+      withdrawal.status = status;
+      await withdrawal.save();
     }
 
     return res.status(200).json({
       success: true,
-      message: "User's withdrawal status updated successfully!",
+      message: "Withdrawal status updated",
       data: withdrawal,
     });
   } catch (err) {
+    console.error("Error updating withdrawal status:", err);
     return res.status(500).json({
       success: false,
-      message: `Server Error: ${err}`,
+      message: err.message,
     });
   }
 };

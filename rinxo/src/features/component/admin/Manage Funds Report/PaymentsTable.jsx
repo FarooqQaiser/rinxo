@@ -1,4 +1,6 @@
-export default function PaymentsTable({ data, formatAmount,StatusBadge }) {
+import StatusBadge from "./StatusBadge";
+
+export default function PaymentsTable({ data, formatAmount }) {
  
 
   return (
