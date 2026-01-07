@@ -1,6 +1,9 @@
-import { Menu, X } from "lucide-react";
+import { Menu, X, LogOut } from "lucide-react"; // added LogOut icon
 import React from "react";
 import MenuItem from "./MenuItem";
+import { logout } from "../../../utils/auth.utils";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 
 export default function SideBar({
   sidebarOpen,
@@ -9,8 +12,18 @@ export default function SideBar({
   setSidebarOpen,
   menuItems,
   activeMenu,
-  setActiveMenu,
+  setActiveMenu, 
 }) {
+const navigate = useNavigate();
+  const handleLogout = async () => {
+    try {
+      await logout();     
+      toast.success("Log Out Successfully");  
+      navigate("/login");   // redirect to login
+    } catch{
+      toast.error("Logout failed"); 
+    }
+  };
   return (
     <>
       {/* Mobile Overlay */}
@@ -32,19 +45,12 @@ export default function SideBar({
           {/* Logo + Close button */}
           <div className="flex justify-between items-center mb-8">
             <img src={RissoxLogo} className="w-[70%]" alt="Logo" />
-            {isMobile && (
-              <button
-                className="cursor-pointer"
-                onClick={() => setSidebarOpen(false)}
-              >
+            {isMobile ? (
+              <button className="cursor-pointer" onClick={() => setSidebarOpen(false)}>
                 <X />
               </button>
-            )}
-            {!isMobile && (
-              <button
-                className="cursor-pointer"
-                onClick={() => setSidebarOpen(false)}
-              >
+            ) : (
+              <button className="cursor-pointer" onClick={() => setSidebarOpen(false)}>
                 <Menu />
               </button>
             )}
@@ -63,6 +69,17 @@ export default function SideBar({
                 }}
               />
             ))}
+          </div>
+
+          {/* Logout Button */}
+          <div className="mt-auto">
+            <button
+              className="flex items-center gap-2 w-full p-2 text-red-600 hover:bg-red-100 rounded-md"
+              onClick={handleLogout}
+            >
+              <LogOut />
+              Logout
+            </button>
           </div>
         </div>
       </aside>

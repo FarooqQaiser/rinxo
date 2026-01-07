@@ -6,13 +6,25 @@ import {
   Send,
 } from "lucide-react"; 
 import { adminStats } from "./config/dashboardStats";
+import { useEffect, useState } from "react";
+import { usersData } from "../../../utils/user.utils";
 export default function Dashboard() {
+    const [userData, setUsers] = useState([]);
+  
+    useEffect(() => {
+      const fetchUsers = async () => {
+        const data = await usersData(); 
+        setUsers(data.data);
+      };
+      fetchUsers();
+    }, []);
   return (
   <>
+  
     <div className="p-6">
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-        {adminStats.map((stat, idx) => (
+        {adminStats(userData).map((stat, idx) => (
           <div
             key={idx}
             className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow"

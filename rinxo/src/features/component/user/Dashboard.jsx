@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import Button from "../../../components/common/Button/Button";
 
-export default function Dashboard() {
+export default function Dashboard({ setActiveSubMenu,user }) { 
   return (
     <div className="p-4 sm:p-6 space-y-6">
       {/* My Funds Section */}
@@ -25,7 +25,8 @@ export default function Dashboard() {
           <span className="text-gray-600 text-sm">USD</span>
           <ChevronDown size={16} className="text-gray-600" />
           <span className="text-3xl sm:text-4xl font-bold text-gray-800 ml-1">
-            $ 0.00
+           {Number(user?.funds || 0).toFixed(2)}
+
           </span>
         </div>
 
@@ -33,7 +34,7 @@ export default function Dashboard() {
         <div className="flex flex-col sm:flex-row gap-3">
           <Button
             btnName="Deposit"
-            locationHref="/"
+            onClick={() => setActiveSubMenu("deposit")}
             extraCss="px-5 py-2 rounded-3xl flex items-center justify-center gap-1 w-full sm:w-auto"
             bgColour="bg-yellow-400"
             textColour="text-white"
@@ -43,9 +44,9 @@ export default function Dashboard() {
             <HandCoins />
           </Button>
 
-          <Button
+          {/* <Button
             btnName="Transfer"
-            locationHref="/"
+            onClick={() => setActiveSubMenu("undefined")}
             extraCss="px-5 py-2 rounded-3xl shadow flex items-center justify-center gap-1 w-full sm:w-auto"
             bgColour=""
             textColour="text-yellow-400"
@@ -53,11 +54,11 @@ export default function Dashboard() {
             fontTextStyle="font-semibold"
           >
             <Send className="w-4 h-4" />
-          </Button>
+          </Button> */}
 
           <Button
             btnName="Withdraw"
-            locationHref="/"
+            onClick={() => setActiveSubMenu("withdraw")}
             extraCss="px-5 py-2 rounded-3xl shadow flex items-center justify-center gap-1 w-full sm:w-auto"
             bgColour=""
             textColour="text-yellow-400"
@@ -78,9 +79,7 @@ export default function Dashboard() {
           </h2>
         </div>
 
-        <span className="text-3xl sm:text-4xl font-bold text-gray-800">
-          0
-        </span>
+        <span className="text-3xl sm:text-4xl font-bold text-gray-800">0</span>
       </div>
 
       {/* Shortcuts */}
