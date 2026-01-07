@@ -2,3 +2,9 @@
 .env
 .env.*
 .env*
+rinxo/.env
+rinxo/.env.*
+rinxo/.env*
+server/.env
+server/.env.*
+server/.env*
