@@ -39,6 +39,46 @@ const nicSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const bandkDepositSchema = mongoose.Schema({
+  amount: {
+    type: Number,
+    required: true,
+  },
+
+  payment_id: {
+    type: String,
+    required: true,
+  },
+
+  bankName: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+
+  accountNumber: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+
+  proofImage: {
+    type: String,
+    required: true,
+  },
+
+  status: {
+    type: String,
+    enum: ["pending", "verified", "rejected"],
+    default: "pending",
+  },
+
+  depositedAt: {
+    type: Date,
+    default: Date.now,
+  },
+});
+
 const userSchema = new mongoose.Schema(
   {
     fullName: {
@@ -100,6 +140,11 @@ const userSchema = new mongoose.Schema(
     isEmailVerified: {
       type: Boolean,
       default: false,
+    },
+
+    bankDeposits: {
+      type: [bandkDepositSchema],
+      default: [],
     },
   },
   { timestamps: true }

@@ -1,6 +1,10 @@
 import bcrypt from "bcryptjs";
 import User from "../models/User.model.js";
-import Withdrawal, { Payment, Transaction } from "../models/payment.models.js";
+import Withdrawal, {
+  Payment,
+  Transaction,
+  UserBalance,
+} from "../models/payment.models.js";
 import PDFDocument from "pdfkit";
 
 export const uploadNICImages = async (req, res) => {
@@ -150,6 +154,7 @@ export const showSingleUser = async (req, res) => {
 export const deleteUser = async (req, res) => {
   try {
     const idToDeleteUser = req.params.idToDeleteUser;
+    console.log("idToDeleteUser: ", idToDeleteUser);
 
     const deleteUser = await User.deleteOne({ _id: idToDeleteUser });
 
@@ -579,7 +584,7 @@ export const exportUserReport = async (req, res) => {
         },
 
         {
-          text: 
+          text:
             w.method === "crypto"
               ? `Network: ${w.details.network}`
               : `${w.details.bankName}\n SWIFT: ${w.details.swiftCode}\n Routing: ${w.details.routingNumber}`,
@@ -591,7 +596,6 @@ export const exportUserReport = async (req, res) => {
         { text: formatAmount(w.net_amount), width: wColW.net },
         { text: w.status, width: wColW.status },
       ];
-
 
       const rowHeight = getRowHeight(doc, cells) + 6;
       if (y + rowHeight > doc.page.height - 50) {
@@ -833,5 +837,222 @@ export const exportUserReport = async (req, res) => {
   } catch (err) {
     console.error("PDF Export Error:", err);
     if (doc) doc.destroy();
+  }
+};
+
+export const addBankDeposit = async (req, res) => {
+  try {
+    const userData = req.user;
+    const { amount, bankName, accountNumber } = req.body;
+
+    const user = await User.findById(userData._id);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: `User with id: ${userData._id}, not found!`,
+      });
+    }
+
+    if (!amount || !bankName || !accountNumber) {
+      return res.status(400).json({
+        success: false,
+        message: "Amount, bank name and account number are required!",
+      });
+    }
+
+    const uniquePaymentId = `TXN-${Date.now()}-${Math.floor(
+      Math.random() * 10000
+    )}`;
+    const order_id = `DEP-${req.userId}-${Date.now()}`;
+
+    const payment = new Payment({
+      payment_id: uniquePaymentId,
+      order_id,
+      user_id: user._id,
+      price_amount: amount,
+      price_currency: "usd",
+      bank_name: bankName,
+      account_number: accountNumber,
+      payment_status: "pending",
+    });
+
+    const transaction = new Transaction({
+      user_id: user._id,
+      payment_id: uniquePaymentId,
+      type: "deposit",
+      amount: amount,
+      currency: "usd",
+      status: "pending",
+      description: "Bank deposit",
+    });
+
+    const deposit = {
+      amount,
+      payment_id: uniquePaymentId,
+      bankName,
+      accountNumber,
+      proofImage: req.file.path,
+      status: "pending",
+    };
+
+    await payment.save();
+    await transaction.save();
+    user.bankDeposits.push(deposit);
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "User's fundes deposited successfully!",
+      deposit,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: `Server Error: ${err}`,
+    });
+  }
+};
+
+export const fetchUserDeposits = async (req, res) => {
+  try {
+    const userId = req.params.userId;
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: `Send user id in params!`,
+      });
+    }
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: `User with id: ${userId}, not found!`,
+      });
+    }
+
+    const deposits = user.bankDeposits.map((deposit) => ({
+      _id: deposit._id,
+      amount: deposit.amount,
+      bankName: deposit.bankName,
+      accountNumber: deposit.accountNumber,
+      status: deposit.status,
+      depositedAt: deposit.depositedAt,
+      proofImage: deposit.proofImage
+        ? `${req.protocol}://${req.get("host")}/${deposit.proofImage}`
+        : null,
+    }));
+
+    return res.status(200).json({
+      success: true,
+      message: "Successfully fetched deposits!",
+      totalDeposits: deposits.length,
+      deposits: deposits,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: `Server Error: ${err}`,
+    });
+  }
+};
+
+export const updateBankDepositStatus = async (req, res) => {
+  try {
+    const { userId, depositId } = req.params;
+    const { status } = req.body;
+
+    if (!userId || !depositId || !status) {
+      return res.status(400).json({
+        success: false,
+        message: "userId, depositId and status are required",
+      });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    const deposit = user.bankDeposits.find(
+      (d) => d._id.toString() === depositId
+    );
+
+    if (!deposit) {
+      return res.status(404).json({
+        success: false,
+        message: "Bank deposit not found",
+      });
+    }
+
+    if (deposit.status === "verified" || deposit.status === "verified") {
+      return res.status(400).json({
+        success: false,
+        message: "Deposit already completed",
+      });
+    }
+    deposit.status = status;
+
+    const payment = await Payment.findOne({ payment_id: deposit.payment_id });
+    if (!payment) {
+      return res.status(404).json({
+        success: false,
+        message: "Payment not found",
+      });
+    }
+    payment.payment_status = status;
+
+    const transaction = await Transaction.findOne({
+      payment_id: deposit.payment_id,
+    });
+    if (!transaction) {
+      return res.status(404).json({
+        success: false,
+        message: "Transaction not found",
+      });
+    }
+    transaction.status = status;
+
+    if (status === "verified") {
+      let userBalance = await UserBalance.findOne({ user_id: user._id });
+
+      if (!userBalance) {
+        userBalance = new UserBalance({
+          user_id: user._id,
+          balance: deposit.amount,
+        });
+
+        transaction.balance_before = 0;
+        transaction.balance_after = deposit.amount;
+      } else {
+        transaction.balance_before = userBalance.balance;
+        userBalance.balance += deposit.amount;
+        transaction.balance_after = userBalance.balance;
+      }
+
+      user.funds += deposit.amount;
+      await userBalance.save();
+    }
+
+    await user.save();
+    await payment.save();
+    await transaction.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Bank deposit status updated successfully",
+      deposit,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: err.message,
+    });
   }
 };

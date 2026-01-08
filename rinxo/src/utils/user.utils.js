@@ -1,6 +1,5 @@
 import axios from "axios";
 
- 
 export const API = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "http://localhost:8000/api",
   headers: {
@@ -8,7 +7,6 @@ export const API = axios.create({
   },
   withCredentials: true,
 });
-
 
 export const usersData = async () => {
   try {
@@ -25,7 +23,7 @@ export const usersData = async () => {
 };
 
 export const specificData = async (userId) => {
-  try { 
+  try {
     const response = await API.get(`/user/userData/${userId}`);
     return response.data || response.json();
   } catch (error) {
@@ -38,9 +36,9 @@ export const specificData = async (userId) => {
   }
 };
 
-export const usersUpdateData = async (id , body) => {
+export const usersUpdateData = async (id, body) => {
   try {
-    const response = await API.patch(`/user/admin/users/${id}`,body);
+    const response = await API.patch(`/user/admin/users/${id}`, body);
     return response.data || response.json();
   } catch (error) {
     throw (
@@ -52,9 +50,9 @@ export const usersUpdateData = async (id , body) => {
   }
 };
 
-export const adminUpdateProfile = async (id , body) => {
+export const adminUpdateProfile = async (id, body) => {
   try {
-    const response = await API.patch(`/user/admin/update-profile/${id}`,body);
+    const response = await API.patch(`/user/admin/update-profile/${id}`, body);
     return response.data || response.json();
   } catch (error) {
     throw (
@@ -66,9 +64,9 @@ export const adminUpdateProfile = async (id , body) => {
   }
 };
 
-export const adminUpdatePassword = async (id , body) => {
-  try { 
-    const response = await API.patch(`/user/admin/update-password/${id}`,body);
+export const adminUpdatePassword = async (id, body) => {
+  try {
+    const response = await API.patch(`/user/admin/update-password/${id}`, body);
     return response.data || response.json();
   } catch (error) {
     throw (

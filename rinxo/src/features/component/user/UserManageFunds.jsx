@@ -10,9 +10,9 @@ import {
 } from "lucide-react";
 import Button from "../../../components/common/Button/Button";
 import { useEffect } from "react";
-import { getUserTransactions } from "../../../utils/payment.utils"; 
+import { getUserTransactions } from "../../../utils/payment.utils";
 
-export default function UserManageFunds({ setActiveSubMenu, user }) { 
+export default function UserManageFunds({ setActiveSubMenu, user }) {
   const [transactions, setTransactions] = useState([]);
   const [statusFilter, setStatusFilter] = useState("All");
   const [searchFilter, setSearchFilter] = useState("All");
@@ -34,23 +34,21 @@ export default function UserManageFunds({ setActiveSubMenu, user }) {
     };
     fetchTransactions();
   }, [user?._id]);
-  
+
   // Reset to page 1 when filters change
   useEffect(() => {
     const timer = setTimeout(() => {
       setCurrentPage(1);
     }, 0);
-    return ()=> clearTimeout(timer)
+    return () => clearTimeout(timer);
   }, [statusFilter, searchFilter, limit]);
 
   // Apply filters first
   const filteredTransactions = transactions
-    .filter(tx =>
+    .filter((tx) =>
       statusFilter === "All" ? true : tx.status === statusFilter
     )
-    .filter(tx =>
-      searchFilter === "All" ? true : tx.type === searchFilter
-    );
+    .filter((tx) => (searchFilter === "All" ? true : tx.type === searchFilter));
 
   // Calculate pagination
   const itemsPerPage = limit === 0 ? filteredTransactions.length : limit;
@@ -59,15 +57,18 @@ export default function UserManageFunds({ setActiveSubMenu, user }) {
   const endIndex = startIndex + itemsPerPage;
 
   // Get current page transactions
-  const transactionsToDisplay = filteredTransactions.slice(startIndex, endIndex);
+  const transactionsToDisplay = filteredTransactions.slice(
+    startIndex,
+    endIndex
+  );
 
   // Pagination handlers
   const goToNextPage = () => {
-    setCurrentPage(prev => Math.min(prev + 1, totalPages));
+    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
   };
 
   const goToPrevPage = () => {
-    setCurrentPage(prev => Math.max(prev - 1, 1));
+    setCurrentPage((prev) => Math.max(prev - 1, 1));
   };
 
   const goToPage = (pageNum) => {
@@ -92,6 +93,18 @@ export default function UserManageFunds({ setActiveSubMenu, user }) {
           <Button
             onClick={() => setActiveSubMenu("deposit")}
             btnName="Deposit"
+            extraCss="flex-1 sm:flex-none px-5 py-2 rounded-3xl flex items-center justify-center gap-2"
+            bgColour="bg-yellow-400"
+            textColour="text-white"
+            hoverBgColour="hover:bg-yellow-500 transition"
+            fontTextStyle="font-semibold"
+          >
+            <HandCoins />
+          </Button>
+
+          <Button
+            btnName="Bank Deposit"
+            onClick={() => setActiveSubMenu("depositThroughBank")}
             extraCss="flex-1 sm:flex-none px-5 py-2 rounded-3xl flex items-center justify-center gap-2"
             bgColour="bg-yellow-400"
             textColour="text-white"
@@ -197,9 +210,9 @@ export default function UserManageFunds({ setActiveSubMenu, user }) {
                         ? tx.type === "deposit"
                           ? "text-green-700"
                           : "text-red-600"
-                      : tx.status ==="pending"
-                        ? "text-yellow-600" : "text-red-600 underline"
-                        
+                        : tx.status === "pending"
+                        ? "text-yellow-600"
+                        : "text-red-600 underline"
                     }`}
                   >
                     {tx.type === "deposit" ? "+" : "-"}$
@@ -216,7 +229,8 @@ export default function UserManageFunds({ setActiveSubMenu, user }) {
               <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
                 {/* Results info */}
                 <p className="text-sm text-gray-600">
-                  Showing {startIndex + 1}-{Math.min(endIndex, filteredTransactions.length)} of{" "}
+                  Showing {startIndex + 1}-
+                  {Math.min(endIndex, filteredTransactions.length)} of{" "}
                   {filteredTransactions.length} transactions
                 </p>
 
@@ -236,41 +250,45 @@ export default function UserManageFunds({ setActiveSubMenu, user }) {
 
                   {/* Page numbers */}
                   <div className="flex gap-1">
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => {
-                      // Show first page, last page, current page, and pages around current
-                      const showPage =
-                        pageNum === 1 ||
-                        pageNum === totalPages ||
-                        (pageNum >= currentPage - 1 && pageNum <= currentPage + 1);
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                      (pageNum) => {
+                        // Show first page, last page, current page, and pages around current
+                        const showPage =
+                          pageNum === 1 ||
+                          pageNum === totalPages ||
+                          (pageNum >= currentPage - 1 &&
+                            pageNum <= currentPage + 1);
 
-                      const showEllipsis =
-                        (pageNum === 2 && currentPage > 3) ||
-                        (pageNum === totalPages - 1 && currentPage < totalPages - 2);
+                        const showEllipsis =
+                          (pageNum === 2 && currentPage > 3) ||
+                          (pageNum === totalPages - 1 &&
+                            currentPage < totalPages - 2);
 
-                      if (showEllipsis) {
+                        if (showEllipsis) {
+                          return (
+                            <span key={pageNum} className="px-2 text-gray-500">
+                              ...
+                            </span>
+                          );
+                        }
+
+                        if (!showPage) return null;
+
                         return (
-                          <span key={pageNum} className="px-2 text-gray-500">
-                            ...
-                          </span>
+                          <button
+                            key={pageNum}
+                            onClick={() => goToPage(pageNum)}
+                            className={`min-w-[2.5rem] px-3 py-2 rounded-lg text-sm font-medium transition ${
+                              currentPage === pageNum
+                                ? "bg-yellow-400 text-white"
+                                : "border border-gray-300 text-gray-700 hover:bg-gray-50"
+                            }`}
+                          >
+                            {pageNum}
+                          </button>
                         );
                       }
-
-                      if (!showPage) return null;
-
-                      return (
-                        <button
-                          key={pageNum}
-                          onClick={() => goToPage(pageNum)}
-                          className={`min-w-[2.5rem] px-3 py-2 rounded-lg text-sm font-medium transition ${
-                            currentPage === pageNum
-                              ? "bg-yellow-400 text-white"
-                              : "border border-gray-300 text-gray-700 hover:bg-gray-50"
-                          }`}
-                        >
-                          {pageNum}
-                        </button>
-                      );
-                    })}
+                    )}
                   </div>
 
                   <button
