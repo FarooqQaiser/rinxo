@@ -1,11 +1,13 @@
 export default function StatusBadge({ status }) {
   const colors = {
     completed: "bg-green-100 text-green-700 border-green-200",
+    verified: "bg-green-100 text-green-700 border-green-200",
     pending: "bg-yellow-100 text-yellow-700 border-yellow-200",
     cancelled: "bg-red-100 text-red-700 border-red-200",
+    rejected: "bg-red-100 text-red-700 border-red-200",
     failed: "bg-red-100 text-red-700 border-red-200",
-    finished:"bg-green-100 text-green-700 border-green-200",
-    waiting:"bg-yellow-100 text-yellow-700 border-yellow-200", 
+    finished: "bg-green-100 text-green-700 border-green-200",
+    waiting: "bg-yellow-100 text-yellow-700 border-yellow-200",
   };
 
   return (

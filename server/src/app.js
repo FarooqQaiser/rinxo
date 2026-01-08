@@ -7,7 +7,7 @@
 
 // import authRoutes from "./routes/auth.routes.js";
 // import dashboardRoutes from "./routes/dashboard.routes.js";
-// import userRoutes from "./routes/user.routes.js"; 
+// import userRoutes from "./routes/user.routes.js";
 // import paymentRoute from "./routes/nowpayment.routes.js";
 
 // const app = express();
@@ -20,7 +20,7 @@
 //     credentials: true,
 //   })
 // );
- 
+
 // app.use(errorHandler);
 // app.use(logger);
 
@@ -33,7 +33,6 @@
 
 // export default app;
 
-
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
@@ -45,7 +44,7 @@ import { logger } from "./middlewares/logger.middleware.js";
 
 import authRoutes from "./routes/auth.routes.js";
 import dashboardRoutes from "./routes/dashboard.routes.js";
-import userRoutes from "./routes/user.routes.js"; 
+import userRoutes from "./routes/user.routes.js";
 import paymentRoute from "./routes/nowpayment.routes.js";
 import withdrawalRoute from "./routes/withdrawal.routes.js";
 
@@ -63,6 +62,7 @@ app.use(
     credentials: true,
   })
 );
+app.use(express.urlencoded({ extended: true }));
 
 // ✅ Serve static files from uploads directory
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
@@ -76,6 +76,5 @@ app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/payment", paymentRoute);
 app.use("/api/withdrawal", withdrawalRoute);
-
 
 export default app;

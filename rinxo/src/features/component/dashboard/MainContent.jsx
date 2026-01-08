@@ -10,6 +10,7 @@ import UserWithdraw from "../user/payment/UserWithdraw";
 import VerificationRoute from "../../../routes/VerificationRoute";
 import Settings from "./Settings";
 import { specificData } from "../../../utils/user.utils";
+import UserDepositThroughBank from "../user/payment/UserDepositThroughBank";
 
 export default function MainContent({
   sidebarOpen,
@@ -21,24 +22,22 @@ export default function MainContent({
   setActiveSubMenu,
 }) {
   const role = userData.role;
-    
-      const [users, setUsers] = useState([]);
-    // const [showVerify, setShowVerify] = useState(false);
-    
-      useEffect(() => {
-        const fetchUser = async () => {
-          const data = await specificData(userData._id); 
-          setUsers(data.data);
-        };
-        fetchUser();
-      }, [activeSubMenu,activeMenu]);
-       
+
+  const [users, setUsers] = useState([]);
+  // const [showVerify, setShowVerify] = useState(false);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const data = await specificData(userData._id);
+      setUsers(data.data);
+    };
+    fetchUser();
+  }, [activeSubMenu, activeMenu]);
+
   // ✅ Reset sub menu when main menu changes
- useEffect(() => {
+  useEffect(() => {
     setActiveSubMenu("undefined");
   }, [activeMenu]);
-
-
 
   return (
     <>
@@ -93,18 +92,34 @@ export default function MainContent({
             <>
               {activeMenu === "dashboard" &&
                 {
-                  deposit: (
+                  depositThroughCrypto: (
                     <VerificationRoute setActiveSubMenu={setActiveSubMenu}>
-                      <UserDeposit setActiveSubMenu={setActiveSubMenu} user={users}/>
+                      <UserDeposit
+                        setActiveSubMenu={setActiveSubMenu}
+                        user={users}
+                      />
+                    </VerificationRoute>
+                  ),
+                  depositThroughBank: (
+                    <VerificationRoute setActiveSubMenu={setActiveSubMenu}>
+                      <UserDepositThroughBank
+                        setActiveSubMenu={setActiveSubMenu}
+                      />
                     </VerificationRoute>
                   ),
                   withdraw: (
                     <VerificationRoute setActiveSubMenu={setActiveSubMenu}>
-                      <UserWithdraw setActiveSubMenu={setActiveSubMenu} user={users} />
+                      <UserWithdraw
+                        setActiveSubMenu={setActiveSubMenu}
+                        user={users}
+                      />
                     </VerificationRoute>
                   ),
                   undefined: (
-                    <UserDashboard user={users} setActiveSubMenu={setActiveSubMenu} />
+                    <UserDashboard
+                      user={users}
+                      setActiveSubMenu={setActiveSubMenu}
+                    />
                   ),
                 }[activeSubMenu]}
               {activeMenu === "settings" && <Settings user={users} />}
@@ -113,16 +128,32 @@ export default function MainContent({
                 {
                   deposit: (
                     <VerificationRoute setActiveSubMenu={setActiveSubMenu}>
-                      <UserDeposit setActiveSubMenu={setActiveSubMenu} user={users}/>
+                      <UserDeposit
+                        setActiveSubMenu={setActiveSubMenu}
+                        user={users}
+                      />
+                    </VerificationRoute>
+                  ),
+                  depositThroughBank: (
+                    <VerificationRoute setActiveSubMenu={setActiveSubMenu}>
+                      <UserDepositThroughBank
+                        setActiveSubMenu={setActiveSubMenu}
+                      />
                     </VerificationRoute>
                   ),
                   withdraw: (
                     <VerificationRoute setActiveSubMenu={setActiveSubMenu}>
-                      <UserWithdraw setActiveSubMenu={setActiveSubMenu} user={users}/>
+                      <UserWithdraw
+                        setActiveSubMenu={setActiveSubMenu}
+                        user={users}
+                      />
                     </VerificationRoute>
                   ),
                   undefined: (
-                    <UserManageFunds setActiveSubMenu={setActiveSubMenu} user={users} />
+                    <UserManageFunds
+                      setActiveSubMenu={setActiveSubMenu}
+                      user={users}
+                    />
                   ),
                 }[activeSubMenu]}
             </>
