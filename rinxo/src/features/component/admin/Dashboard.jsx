@@ -18,6 +18,12 @@ export default function Dashboard() {
       };
       fetchUsers();
     }, []);
+
+    const totalFunds = userData.reduce(
+    (sum, user) => sum + (user.funds || 0),
+    0
+  );
+
   return (
   <>
   
@@ -53,7 +59,7 @@ export default function Dashboard() {
         <div className="flex items-center gap-2 mb-4">
           <span className="text-gray-600">USD</span>
           <ChevronDown size={16} className="text-gray-600" />
-          <span className="text-4xl font-bold text-gray-800 ml-2">$ 0.00</span>
+          <span className="text-4xl font-bold text-gray-800 ml-2">{totalFunds.toFixed(2)} </span>
         </div>
         
       </div>

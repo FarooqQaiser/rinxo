@@ -147,7 +147,7 @@ export default function UserManageFunds({ setActiveSubMenu, user }) {
               <option value="All">All</option>
               <option value="completed">Completed</option>
               <option value="pending">Pending</option>
-              <option value="rejected">Rejected</option>
+              <option value="cancelled">Cancelled</option>
             </select>
             <select
               value={searchFilter}

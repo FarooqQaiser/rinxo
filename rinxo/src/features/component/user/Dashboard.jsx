@@ -82,7 +82,7 @@ export default function Dashboard({ setActiveSubMenu, user }) {
       </div>
 
       {/* My Referrals Section */}
-      <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6">
+      {/* <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6">
         <div className="flex items-center gap-2 mb-4">
           <UsersRound className="text-gray-600" size={20} />
           <h2 className="text-base sm:text-lg font-semibold text-gray-700">
@@ -91,7 +91,7 @@ export default function Dashboard({ setActiveSubMenu, user }) {
         </div>
 
         <span className="text-3xl sm:text-4xl font-bold text-gray-800">0</span>
-      </div>
+      </div> */}
 
       {/* Shortcuts */}
       <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6">

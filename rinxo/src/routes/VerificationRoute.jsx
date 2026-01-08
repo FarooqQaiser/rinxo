@@ -49,11 +49,22 @@ const VerificationRoute = ({ children, setActiveSubMenu }) => {
       </div>
     );
   if (!isAuth) return <Navigate to="/login" replace />;
-
-  // 🚫 Block inactive users
-  if (users.role === "user" && users.status === "inActive") {
-    return <VerifyIdentity user={users} setActiveSubMenu={setActiveSubMenu} />;
-  }
+ 
+  // if (users.role === "user" && (users.status === "inActive" || users.status === "rejected")) {
+  //   return <VerifyIdentity user={users} setActiveSubMenu={setActiveSubMenu} />;
+  // }
+// 🚫 Block inactive or rejected users
+if (
+  users?.role === "user" &&
+  ["inActive", "rejected"].includes(users?.status)
+) {
+  return (
+    <VerifyIdentity
+      user={users}
+      setActiveSubMenu={setActiveSubMenu}
+    />
+  );
+}
 
   // Prevent pending status users to access deposit or withdraw
   if (users.role === "user" && users.status === "pending") {

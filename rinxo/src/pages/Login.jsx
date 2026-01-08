@@ -118,13 +118,14 @@ export default function Login() {
           </select>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} autoComplete="off" className="space-y-4">
           {loginType === "email" ? (
             <div>
               <label className="block text-gray-700 mb-1 text-sm">Email</label>
               <input
                 type="email"
                 name="email"
+                autoComplete="new-email"
                 value={formData.email}
                 onChange={getValue}
                 placeholder="Email *"
@@ -157,6 +158,7 @@ export default function Login() {
 
                 <input
                   name="phone"
+                  autoComplete="new-phone"
                   value={formData.phone}
                   onChange={(e) => {
                     const value = e.target.value.replace(/\D/g, "");
@@ -183,6 +185,8 @@ export default function Login() {
               <input
                 type={passwordVisible ? "text" : "password"}
                 name="password"
+                autoComplete="new-password"
+
                 value={formData.password}
                 onChange={getValue}
                 placeholder="Password *"
@@ -205,16 +209,16 @@ export default function Login() {
             )}
           </div>
 
-          <div className="text-right">
+          {/* <div className="text-right">
             <a href="#" className="text-yellow-400 text-sm hover:underline">
               Forgot Password?
             </a>
-          </div>
+          </div> */}
 
           <button
             type="submit"
             disabled={loading}
-            className={`w-full py-3 rounded-full font-semibold transition ${
+            className={`w-full py-3 rounded-full font-semibold transition mt-3 ${
               loading
                 ? "bg-gray-400 cursor-not-allowed"
                 : "bg-yellow-400 hover:bg-yellow-500 text-white"

@@ -7,7 +7,7 @@ export default function VerifyIdentity({ user, setActiveSubMenu }) {
 
   // ✅ Only open if inactive
   useEffect(() => {
-    if (user?.status === "inActive") {
+    if (user?.status === "inActive" || user?.status === "rejected") {
       const timer = setTimeout(() => {
         setShowWarning(true);
       }, 300);

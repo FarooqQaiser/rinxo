@@ -196,18 +196,17 @@ export const createPayment = async (req, res) => {
 export const getPaymentStatus = async (req, res) => {
   try {
     const { payment_id } = req.params;
-
+    console.log("getPaymentStatus : payment :- ", payment_id);
     const payment = await Payment.findOne({
       payment_id,
       user_id: req.userId,
     });
-
+ 
     if (!payment) {
       return res.status(404).json({ error: "Payment not found" });
     }
 
-    const response = await nowpaymentsRequest.get(`/payment/${payment_id}`);
-
+    const response = await nowpaymentsRequest.get(`/payment/${payment_id}`); 
     if (response.data.payment_status !== payment.payment_status) {
       payment.payment_status = response.data.payment_status;
       payment.actually_paid =
