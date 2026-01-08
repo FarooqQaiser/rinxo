@@ -1,10 +1,14 @@
 import { useState } from "react";
 import StatusBadge from "./StatusBadge";
 
-export default function WithdrawalTable({ data, formatAmount }) {
+export default function WithdrawalTable({
+  data,
+  formatAmount,
+  isLoading,
+  setIsLoading,
+}) {
   const [dirtyRows, setDirtyRows] = useState(new Set());
   const [rowStatuses, setRowStatuses] = useState({});
-  const [isLoading, setIsLoading] = useState(false);
 
   const updateWithdrawalStatus = async (status, withdrawId) => {
     setIsLoading(true);
@@ -58,7 +62,7 @@ export default function WithdrawalTable({ data, formatAmount }) {
     });
     setRowStatuses((prev) => ({
       ...prev,
-      [rowIndex]: value
+      [rowIndex]: value,
     }));
   };
 
@@ -80,41 +84,64 @@ export default function WithdrawalTable({ data, formatAmount }) {
       <table className="w-full">
         <thead className="bg-gray-50 border-b border-gray-200">
           <tr>
-            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">ID</th>
-            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">Method</th>
-            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">Account Details</th>
-            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">Bank Info</th>
-            <th className="text-right py-3 px-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">Amount</th>
-            <th className="text-right py-3 px-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">Fee</th>
-            <th className="text-right py-3 px-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">Net Amount</th>
-            <th className="text-center py-3 px-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
-            <th className="text-center py-3 px-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
+            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">
+              ID
+            </th>
+            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">
+              Method
+            </th>
+            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">
+              Account Details
+            </th>
+            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">
+              Bank Info
+            </th>
+            <th className="text-right py-3 px-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">
+              Amount
+            </th>
+            <th className="text-right py-3 px-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">
+              Fee
+            </th>
+            <th className="text-right py-3 px-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">
+              Net Amount
+            </th>
+            <th className="text-center py-3 px-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">
+              Status
+            </th>
+            <th className="text-center py-3 px-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">
+              Actions
+            </th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100 bg-white">
           {data?.map((w, i) => (
             <tr key={w._id || i} className="hover:bg-gray-50 transition-colors">
-              <td className="py-4 px-4 text-sm font-medium text-gray-900">#{i + 1}</td>
+              <td className="py-4 px-4 text-sm font-medium text-gray-900">
+                #{i + 1}
+              </td>
               <td className="py-4 px-4">
-                <div className="text-sm font-medium text-gray-900 capitalize">{w.method}</div> 
+                <div className="text-sm font-medium text-gray-900 capitalize">
+                  {w.method}
+                </div>
               </td>
               <td className="py-4 px-4">
                 {w.method === "crypto" ? (
                   <div className="space-y-1">
                     <div className="text-sm font-medium text-gray-900">
-                      <span className="text-gray-500">Currency:</span> {w.details?.currency || 'N/A'}
+                      <span className="text-gray-500">Currency:</span>{" "}
+                      {w.details?.currency || "N/A"}
                     </div>
                     <div className="text-xs text-gray-500 font-mono break-all max-w-xs">
-                      {w.details?.walletAddress || 'N/A'}
+                      {w.details?.walletAddress || "N/A"}
                     </div>
                   </div>
                 ) : (
                   <div className="space-y-1">
                     <div className="text-sm font-medium text-gray-900">
-                      {w.details?.accountName || 'N/A'}
+                      {w.details?.accountName || "N/A"}
                     </div>
                     <div className="text-xs text-gray-500">
-                      Acc: {w.details?.accountNumber || 'N/A'}
+                      Acc: {w.details?.accountNumber || "N/A"}
                     </div>
                   </div>
                 )}
@@ -122,12 +149,13 @@ export default function WithdrawalTable({ data, formatAmount }) {
               <td className="py-4 px-4">
                 {w.method === "crypto" ? (
                   <div className="text-sm text-gray-900">
-                    <span className="text-gray-500">Network:</span> {w.details?.network || 'N/A'}
+                    <span className="text-gray-500">Network:</span>{" "}
+                    {w.details?.network || "N/A"}
                   </div>
                 ) : (
                   <div className="space-y-1">
                     <div className="text-sm font-medium text-gray-900">
-                      {w.details?.bankName || 'N/A'}
+                      {w.details?.bankName || "N/A"}
                     </div>
                     {w.details?.swiftCode && (
                       <div className="text-xs text-gray-500">
@@ -172,7 +200,7 @@ export default function WithdrawalTable({ data, formatAmount }) {
                         disabled={isLoading}
                         className="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium text-sm transition-colors shadow-sm"
                       >
-                        {isLoading ? 'Saving...' : 'Save'}
+                        {isLoading ? "Saving..." : "Save"}
                       </button>
                     )}
                   </div>

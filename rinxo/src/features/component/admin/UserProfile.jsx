@@ -29,7 +29,7 @@ export default function UserProfile() {
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState("");
   const [selectedUser, setSelectedUser] = useState(null);
-const [previewImage, setPreviewImage] = useState(null);
+  const [previewImage, setPreviewImage] = useState(null);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [usersPerPage, setUsersPerPage] = useState(5);
@@ -145,13 +145,14 @@ const [previewImage, setPreviewImage] = useState(null);
 
   const confirmDelete = async () => {
     try {
-      const deleteData = await userDeleteData(userToDelete._id);
+      console.log("userToDelete: ", userToDelete);
+      const deleteData = await userDeleteData(userToDelete);
 
       if (deleteData.success === true) {
         toast.success(deleteData.message);
 
         // Remove user from UI
-        setUsers(users.filter((u) => u._id !== userToDelete._id));
+        setUsers(users.filter((u) => u._id !== userToDelete));
       } else {
         toast.error(deleteData.message);
       }
@@ -541,46 +542,47 @@ const [previewImage, setPreviewImage] = useState(null);
                         CNIC Front
                       </label>
                       {selectedUser?.nic?.frontImage ? (
-                    
                         <img
-                          src={`${import.meta.env.VITE_BACKEND_URL}/uploads/${selectedUser.nic.frontImage}`}
+                          src={`${import.meta.env.VITE_BACKEND_URL}/uploads/${
+                            selectedUser.nic.frontImage
+                          }`}
                           alt="CNIC Front"
                           onClick={() =>
                             setPreviewImage(
-                              `${import.meta.env.VITE_BACKEND_URL}/uploads/${selectedUser.nic.frontImage}`
+                              `${import.meta.env.VITE_BACKEND_URL}/uploads/${
+                                selectedUser.nic.frontImage
+                              }`
                             )
                           }
                           className="w-full h-[180px] border rounded-md shadow-md object-cover cursor-pointer hover:opacity-90"
                         />
-
-                       
                       ) : (
                         <p className="text-gray-400 text-sm">
                           No CNIC front uploaded
                         </p>
                       )}
                     </div>
-                      {previewImage && (
-                        <div
-                          className="fixed inset-0 bg-black/80 z-[9999] flex items-center justify-center p-4"
-                          onClick={() => setPreviewImage(null)}
-                        >
-                          <div className="relative max-w-4xl w-full">
-                            <button
-                              onClick={() => setPreviewImage(null)}
-                              className="absolute -top-10 right-0 text-white hover:text-gray-300"
-                            >
-                              <X size={32} />
-                            </button>
+                    {previewImage && (
+                      <div
+                        className="fixed inset-0 bg-black/80 z-[9999] flex items-center justify-center p-4"
+                        onClick={() => setPreviewImage(null)}
+                      >
+                        <div className="relative max-w-4xl w-full">
+                          <button
+                            onClick={() => setPreviewImage(null)}
+                            className="absolute -top-10 right-0 text-white hover:text-gray-300"
+                          >
+                            <X size={32} />
+                          </button>
 
-                            <img
-                              src={previewImage}
-                              alt="CNIC Preview"
-                              className="w-full max-h-[70vh] object-contain rounded-lg shadow-2xl"
-                            />
-                          </div>
+                          <img
+                            src={previewImage}
+                            alt="CNIC Preview"
+                            className="w-full max-h-[70vh] object-contain rounded-lg shadow-2xl"
+                          />
                         </div>
-                      )}
+                      </div>
+                    )}
 
                     <div className="flex-1">
                       <label className="text-sm text-gray-600 block mb-1">
@@ -588,15 +590,19 @@ const [previewImage, setPreviewImage] = useState(null);
                       </label>
                       {selectedUser?.nic?.backImage ? (
                         <img
-                          src={`${import.meta.env.VITE_BACKEND_URL}/uploads/${selectedUser.nic.backImage}`}
+                          src={`${import.meta.env.VITE_BACKEND_URL}/uploads/${
+                            selectedUser.nic.backImage
+                          }`}
                           alt="CNIC Back"
                           onClick={() =>
                             setPreviewImage(
-                              `${import.meta.env.VITE_BACKEND_URL}/uploads/${selectedUser.nic.backImage}`
+                              `${import.meta.env.VITE_BACKEND_URL}/uploads/${
+                                selectedUser.nic.backImage
+                              }`
                             )
                           }
                           className="w-full h-[180px] border rounded-md shadow-md object-cover cursor-pointer hover:opacity-90"
-                        /> 
+                        />
                       ) : (
                         <p className="text-gray-400 text-sm">
                           No CNIC back uploaded

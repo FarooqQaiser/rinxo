@@ -2,8 +2,10 @@ import express from "express";
 import { uploadNIC } from "../middlewares/upload.middleware.js";
 import {
   activateUser,
+  addBankDeposit,
   deleteUser,
   exportUserReport,
+  fetchUserDeposits,
   showAllPayments,
   showAllUsers,
   showloggedInAdminData,
@@ -11,10 +13,12 @@ import {
   showUserAndHisAllTransactions,
   updateAdminPassword,
   updateAdminProfile,
+  updateBankDepositStatus,
   uploadNICImages,
 } from "../controllers/user.controller.js";
 import { protect } from "../middlewares/auth.middlerware.js";
-import Withdrawal, { Payment, Transaction } from "../models/payment.models.js";
+import { upload } from "../middlewares/uploadDepositProof.middleware.js";
+import User from "../models/User.model.js";
 
 const router = express.Router();
 
@@ -39,5 +43,8 @@ router.get("/admin/export-user-report/:userId", protect, exportUserReport);
 
 // user
 router.get("/userData/:userId", protect, showSingleUser);
+router.post("/deposit", protect, upload.single("proofImage"), addBankDeposit);
+router.get("/deposits/:userId", protect, fetchUserDeposits);
+router.patch("/deposits/:userId/:depositId", protect, updateBankDepositStatus);
 
 export default router;

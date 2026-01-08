@@ -11,19 +11,24 @@ const paymentSchema = new mongoose.Schema({
   },
   price_amount: { type: Number, required: true },
   price_currency: { type: String, required: true },
-  pay_amount: { type: Number, required: true },
-  pay_currency: { type: String, required: true },
+  price_amount: { type: Number },
+  price_currency: { type: String, default: "usd" },
+  pay_amount: { type: Number },
+  pay_currency: { type: String },
   pay_address: { type: String },
   payment_status: {
     type: String,
     enum: [
       "waiting",
+      "pending",
       "confirming",
       "confirmed",
+      "verified",
       "sending",
       "partially_paid",
       "finished",
       "failed",
+      "rejected",
       "refunded",
       "expired",
     ],
@@ -56,7 +61,14 @@ const transactionSchema = new mongoose.Schema({
   currency: { type: String, default: "USD" },
   status: {
     type: String,
-    enum: ["pending", "completed", "failed", "cancelled"],
+    enum: [
+      "pending",
+      "completed",
+      "failed",
+      "cancelled",
+      "verified",
+      "rejected",
+    ],
     default: "pending",
   },
   description: { type: String },
@@ -82,7 +94,7 @@ const userBalanceSchema = new mongoose.Schema({
 });
 
 const UserBalance = mongoose.model("UserBalance", userBalanceSchema);
- 
+
 const withdrawalSchema = new mongoose.Schema(
   {
     withdrawal_id: {

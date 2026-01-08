@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import { ArrowLeft, Download, RefreshCw, Filter, Search, Menu } from "lucide-react";
-import DepositTable from "./DepositTable";
+import { ArrowLeft, Download, Search, Menu } from "lucide-react";
 import WithdrawalTable from "./WithdrawalTable";
 import PaymentsTable from "./PaymentsTable";
 import TransactionTable from "./TransactionTable";
 import { getUserWithdrawals } from "../../../../utils/withdrawal.utils";
+import BankDepositsTable from "./BankDepositsTable";
+import CryptoDepositTable from "./CryptoDepositTable";
 
 const ManageFundsReport = ({ setShowReport, userId }) => {
   const [activeTab, setActiveTab] = useState(0);
@@ -15,22 +16,24 @@ const ManageFundsReport = ({ setShowReport, userId }) => {
   const [deposits, setDeposits] = useState([]);
   const [payments, setPayments] = useState([]);
   const [transactions, setTransactions] = useState([]);
+  const [bankDeposits, setBankDeposits] = useState([]);
   const [statusFilter, setStatusFilter] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
   const sidebarItems = [
     { name: "Withdrawals", count: withdrawals.length },
-    { name: "Deposits", count: deposits.length },
+    { name: "Crypto Deposits", count: deposits.length },
     { name: "Payments", count: payments.length },
     { name: "Transactions", count: transactions.length },
+    { name: "Bank Deposits", count: bankDeposits.length },
   ];
-   
+
   useEffect(() => {
     // Fetch Withdrawals
     const fetchWithdrawals = async () => {
       try {
-        const response = await getUserWithdrawals({ userId }); 
+        const response = await getUserWithdrawals({ userId });
         setWithdrawals(response || []);
       } catch (err) {
         console.error("Error Fetching Withdrawals:", err);
@@ -82,9 +85,33 @@ const ManageFundsReport = ({ setShowReport, userId }) => {
       }
     };
 
+    // Fetch Bank Deposits
+    const fetchBankDeposits = async () => {
+      try {
+        const response = await fetch(
+          `http://localhost:8000/api/user/deposits/${userId}`,
+          {
+            method: "GET",
+            credentials: "include",
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(`HTTP ERROR! Status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        // console.log("result: ", result);
+        setBankDeposits(result.deposits);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
     fetchWithdrawals();
     fetchDepositsAndTransactions();
     fetchPayments();
+    fetchBankDeposits();
   }, [userId, isLoading]);
 
   useEffect(() => {
@@ -95,12 +122,11 @@ const ManageFundsReport = ({ setShowReport, userId }) => {
   const withdrawalsStatusCounts = withdrawals.reduce(
     (acc, w) => {
       acc.all += 1;
-      if(w.status === "completed") acc.completed +=1;
-      if(w.status === "pending") acc.pending +=1;
-      if(w.status === "cancelled") acc.cancelled +=1;
-      if(w.status === "failed") acc.failed +=1;
+      if (w.status === "completed") acc.completed += 1;
+      if (w.status === "pending") acc.pending += 1;
+      if (w.status === "cancelled") acc.cancelled += 1;
+      if (w.status === "failed") acc.failed += 1;
 
-       
       return acc;
     },
     { all: 0, completed: 0, pending: 0, cancelled: 0, failed: 0 }
@@ -109,20 +135,27 @@ const ManageFundsReport = ({ setShowReport, userId }) => {
   const getActiveData = () => {
     switch (activeTab) {
       case 0:
-        return withdrawals.filter((w) =>  statusFilter === "All" ? true : w.status === statusFilter );
-     
+        return withdrawals.filter((w) =>
+          statusFilter === "All" ? true : w.status === statusFilter
+        );
+
       case 1:
-        return deposits.filter((w) =>
-          w.payment_id.toLowerCase().includes(searchTerm.toLowerCase())
+        return deposits.filter((d) =>
+          d.payment_id.toLowerCase().includes(searchTerm.toLowerCase())
         );
       case 2:
-        return payments.filter((w) =>
-          w.payment_id.toLowerCase().includes(searchTerm.toLowerCase())
+        return payments.filter((p) =>
+          p.payment_id.toLowerCase().includes(searchTerm.toLowerCase())
         );
       case 3:
-        return transactions.filter((w) =>
-          w.payment_id.toLowerCase().includes(searchTerm.toLowerCase())
+        return transactions.filter((t) =>
+          t.payment_id.toLowerCase().includes(searchTerm.toLowerCase())
         );
+      case 4:
+        return bankDeposits;
+      // .filter((bd) =>
+      //   bd.payment_id.toLowerCase().includes(searchTerm.toLowerCase())
+      // );
       default:
         return [];
     }
@@ -133,15 +166,19 @@ const ManageFundsReport = ({ setShowReport, userId }) => {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedData = activeData.slice(startIndex, startIndex + itemsPerPage);
 
-  const handleNext = () =>
+  const handleNext = () => {
     setCurrentPage((prev) => Math.min(prev + 1, totalPages));
-  const handlePrev = () => setCurrentPage((prev) => Math.max(prev - 1, 1));
+  };
+
+  const handlePrev = () => {
+    setCurrentPage((prev) => Math.max(prev - 1, 1));
+  };
 
   const formatAmount = (value) => {
     if (value === null || value === undefined || isNaN(value)) return "0.00";
     return Number(value).toFixed(2);
-  }; 
-  
+  };
+
   const handleExportButton = async () => {
     try {
       const response = await fetch(
@@ -173,14 +210,17 @@ const ManageFundsReport = ({ setShowReport, userId }) => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             {/* {sidebarOpen && ( */}
-            <button onClick={() => setSidebarOpen(!sidebarOpen)}>
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="cursor-pointer"
+            >
               <Menu />
             </button>
             {/* )} */}
 
             <button
               onClick={() => setShowReport(false)}
-              className="flex items-center gap-2 px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              className="flex items-center gap-2 px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
             >
               <ArrowLeft size={18} />
               <span className="font-medium">Back</span>
@@ -199,7 +239,7 @@ const ManageFundsReport = ({ setShowReport, userId }) => {
               <RefreshCw size={20} />
             </button> */}
             <button
-              className="flex items-center gap-2 px-4 py-2 bg-yellow-400 text-gray-900 rounded-lg hover:bg-yellow-500 transition-colors font-medium"
+              className="flex items-center gap-2 px-4 py-2 bg-yellow-400 text-gray-900 rounded-lg hover:bg-yellow-500 transition-colors font-medium cursor-pointer"
               onClick={handleExportButton}
             >
               <Download size={18} />
@@ -220,7 +260,7 @@ const ManageFundsReport = ({ setShowReport, userId }) => {
               <button
                 key={item.name}
                 onClick={() => setActiveTab(index)}
-                className={`w-full text-left px-4 py-3 rounded-lg transition-all flex items-center justify-between group ${
+                className={`w-full text-left px-4 py-3 rounded-lg transition-all flex items-center justify-between group cursor-pointer ${
                   activeTab === index
                     ? "bg-yellow-400 text-gray-900 font-semibold shadow-sm"
                     : "text-gray-600 hover:bg-gray-50"
@@ -245,62 +285,44 @@ const ManageFundsReport = ({ setShowReport, userId }) => {
         <div className={"flex-1 flex flex-col overflow-hidden"}>
           {/* Search & Filter Bar */}
           <div className={"bg-white border-b border-gray-200 px-6 py-4"}>
-            {activeTab !== 0 ?
-            
-            <div className="flex gap-4">
-              <div className="flex-1 relative">
-                <Search
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-                  size={20}
-                />
-                <input
-                  type="text"
-                  placeholder="Search Payment ID..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
-                />
+            {activeTab !== 0 ? (
+              <div className="flex gap-4">
+                <div className="flex-1 relative">
+                  <Search
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                    size={20}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Search Payment ID..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
+                  />
+                </div>
               </div>
-              
-            </div> : 
-            
- <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="flex-1 sm:flex-none sm:w-40 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:outline-none"
-            >
-              <option value="All">All 
-                
-                ({withdrawalsStatusCounts.all})
-                </option>
-                 <option value="completed">Completed 
-                ({withdrawalsStatusCounts.completed})
-                </option>
-              <option value="pending">Pending 
-                ({withdrawalsStatusCounts.pending})
-                </option>
-                <option value="cancelled">Cancelled 
-                ({withdrawalsStatusCounts.cancelled})
-                </option>
-              
-            </select>
-
-            {/* <select
-              // value={usersPerPage}
-              // onChange={handleUsersPerPageChange}
-              className="flex-1 sm:flex-none sm:w-24 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:outline-none"
-            >
-              <option value={3}>3</option>
-              <option value={5}>5</option>
-              <option value={10}>10</option>
-              <option value={11}>All</option>
-            </select> */}
-            
-          </div>
-
-            }
-            
+            ) : (
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="flex-1 sm:flex-none sm:w-40 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:outline-none cursor-pointer"
+                >
+                  <option value="All">
+                    All ({withdrawalsStatusCounts.all})
+                  </option>
+                  <option value="completed">
+                    Completed ({withdrawalsStatusCounts.completed})
+                  </option>
+                  <option value="pending">
+                    Pending ({withdrawalsStatusCounts.pending})
+                  </option>
+                  <option value="cancelled">
+                    Cancelled ({withdrawalsStatusCounts.cancelled})
+                  </option>
+                </select>
+              </div>
+            )}
           </div>
 
           {/* Table Content */}
@@ -310,10 +332,12 @@ const ManageFundsReport = ({ setShowReport, userId }) => {
                 <WithdrawalTable
                   data={paginatedData}
                   formatAmount={formatAmount}
+                  isLoading={isLoading}
+                  setIsLoading={setIsLoading}
                 />
               )}
               {activeTab === 1 && (
-                <DepositTable
+                <CryptoDepositTable
                   data={paginatedData}
                   formatAmount={formatAmount}
                 />
@@ -328,6 +352,14 @@ const ManageFundsReport = ({ setShowReport, userId }) => {
                 <TransactionTable
                   data={paginatedData}
                   formatAmount={formatAmount}
+                />
+              )}
+              {activeTab === 4 && (
+                <BankDepositsTable
+                  data={paginatedData}
+                  userId={userId}
+                  isLoading={isLoading}
+                  setIsLoading={setIsLoading}
                 />
               )}
             </div>
