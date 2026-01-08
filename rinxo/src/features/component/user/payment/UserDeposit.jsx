@@ -15,6 +15,7 @@ import {
   getEstimate,
   createPayment,
   normalizeCurrency,
+  getPaymentStatus,
 } from "../../../../utils/payment.utils";
 
 export default function UserDeposit({ setActiveSubMenu, user }) {
@@ -28,48 +29,112 @@ export default function UserDeposit({ setActiveSubMenu, user }) {
   const [payment, setPayment] = useState(null);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
+  const [paymentStatus, setPaymentStatus] = useState("waiting");
   const POPULAR_CRYPTOS = ["btc", "eth", "usdt", "ltc", "bnb", "trx"];
+
   /* ================= FETCH CURRENCIES ================= */
-
-
   useEffect(() => {
-  let isMounted = true;
+    let isMounted = true;
 
-  const init = async () => {
-    try {
-      const data = await fetchCurrencies();
-      const filtered = data?.currencies?.filter(c =>
-        POPULAR_CRYPTOS.includes(c?.toLowerCase())
-      );
+    const init = async () => {
+      try {
+        const data = await fetchCurrencies();
+        const filtered = data?.currencies?.filter(c =>
+          POPULAR_CRYPTOS.includes(c?.toLowerCase())
+        );
 
-      if (isMounted) {
-        setCurrencies(filtered?.length ? filtered : POPULAR_CRYPTOS);
+        if (isMounted) {
+          setCurrencies(filtered?.length ? filtered : POPULAR_CRYPTOS);
+        }
+      } catch {
+        if (isMounted) setCurrencies(POPULAR_CRYPTOS);
+      } finally {
+        setTimeout(() => {
+          if (isMounted) setLoadingPage(false);
+        }, 200);
       }
-    } catch {
-      if (isMounted) setCurrencies(POPULAR_CRYPTOS);
-    } finally {
-      setTimeout(() => {
-        if (isMounted) setLoadingPage(false);
-      }, 200);
-    }
-  };
+    };
 
-  init();
+    init();
 
-  return () => {
-    isMounted = false;
-  };
-}, []);
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
+  /* ================= PAYMENT STATUS POLLING ================= */
+  useEffect(() => {
+    if (!payment?.payment_id || !user?._id) return;
+
+    let isActive = true;
+
+    const checkStatus = async () => {
+      if (!isActive) return false;
+
+      try {
+        const statusData = await getPaymentStatus({ 
+          paymentId: payment.payment_id, 
+          userId: user._id 
+        });
+        
+        console.log("Payment status update:", statusData);
+        
+        if (!isActive) return false;
+
+        if (statusData?.payment_status) {
+          setPaymentStatus(statusData.payment_status);
+          
+          // Update payment object with latest data
+          setPayment(prev => ({
+            ...prev,
+            payment_status: statusData.payment_status,
+            actually_paid: statusData.actually_paid || prev.actually_paid,
+            outcome_amount: statusData.outcome_amount || prev.outcome_amount
+          }));
+          
+          // Stop polling if payment is finished, failed, or expired
+          if (["finished", "failed", "expired", "refunded"].includes(statusData.payment_status)) {
+            console.log(`Payment ${statusData.payment_status} - stopping status checks`);
+            return true; // Signal to stop polling
+          }
+        }
+        return false;
+      } catch (err) {
+        console.error("Error checking payment status:", err);
+        // Don't stop polling on error, might be temporary network issue
+        return false;
+      }
+    };
+
+    // Initial check after 5 seconds
+    const initialTimeout = setTimeout(() => {
+      checkStatus();
+    }, 5000);
+
+    // Poll every 1 minute (60000ms)
+    const intervalId = setInterval(async () => {
+      const shouldStop = await checkStatus();
+      if (shouldStop) {
+        clearInterval(intervalId);
+      }
+    }, 10000);
+
+    // Cleanup function
+    return () => {
+      isActive = false;
+      clearTimeout(initialTimeout);
+      clearInterval(intervalId);
+    };
+  }, [payment?.payment_id, user?._id]);
  
-  /*  PRICE ESTIMATION (DEBOUNCE)   */
+  /* ================= PRICE ESTIMATION (DEBOUNCE) ================= */
   useEffect(() => {
     const timer = setTimeout(() => {
       if (amount && parseFloat(amount) >= 10) {
         handleEstimate();
       } else {
         setEstimatedAmount(null);
-        setError(""); // Clear error when amount changes
+        setError("");
       }
     }, 1000);
 
@@ -78,7 +143,7 @@ export default function UserDeposit({ setActiveSubMenu, user }) {
 
   const handleEstimate = async () => {
     setEstimating(true);
-    setError(""); // Clear previous errors
+    setError("");
 
     try {
       const data = await getEstimate({
@@ -93,7 +158,6 @@ export default function UserDeposit({ setActiveSubMenu, user }) {
       console.error("Estimate error:", err);
       setEstimatedAmount(null);
 
-      // Handle specific error cases
       if (err.response?.status === 403) {
         setError(
           "API key validation failed. Please check your NOWPayments API configuration."
@@ -108,11 +172,10 @@ export default function UserDeposit({ setActiveSubMenu, user }) {
     }
   };
 
-  /*  CREATE PAYMENT   */
+  /* ================= CREATE PAYMENT ================= */
   const handleCreatePayment = async () => {
     const parsedAmount = parseFloat(amount);
 
-    // Validation checks
     if (!amount || isNaN(parsedAmount)) {
       setError("Please enter a valid amount");
       return;
@@ -123,7 +186,6 @@ export default function UserDeposit({ setActiveSubMenu, user }) {
       return;
     }
 
-    // ✅ CRITICAL: Wait for estimate to complete first
     if (estimating) {
       setError("Please wait for price estimation to complete");
       return;
@@ -138,15 +200,7 @@ export default function UserDeposit({ setActiveSubMenu, user }) {
     setError("");
 
     try {
-      // Normalize the currency to match NOWPayments format
       const normalizedCurrency = normalizeCurrency(selectedCrypto);
-
-      // console.log("Creating payment with:", {
-      //   amount: parsedAmount,
-      //   currency: normalizedCurrency,
-      //   estimatedCryptoAmount: estimatedAmount,
-      //   originalCrypto: selectedCrypto,
-      // });
 
       const payload = {
         price_amount: parsedAmount,
@@ -164,23 +218,25 @@ export default function UserDeposit({ setActiveSubMenu, user }) {
         payload,
         userId: user._id,
       });
-      console.log("data: ", data);
-      console.log("payload for payments API: ", {
-        payment_id: data.payment_id,
-        order_id: data.order_id,
-        // user_id: data.user_id,
-        price_amount: data.price_amount,
-        price_currency: data.price_currency,
-        pay_amount: data.pay_amount,
-        pay_currency: data.pay_currency,
-        pay_address: data.pay_address,
-        payment_status: data.payment_status,
-        actually_paid: data.actually_paid,
-        invoice_id: data.invoice_id,
-        created_at: data.created_at,
-        metadata: data.metadata,
-      });
+      
+      console.log("Payment created:", data);
+      
       setPayment(data);
+      setPaymentStatus(data.payment_status || "waiting");
+
+      // Initial status check
+      try {
+        const statusData = await getPaymentStatus({ 
+          paymentId: data.payment_id, 
+          userId: user._id 
+        });
+        console.log("Initial payment status:", statusData);
+        if (statusData?.payment_status) {
+          setPaymentStatus(statusData.payment_status);
+        }
+      } catch (err) {
+        console.error("Error fetching initial payment status:", err);
+      }
     } catch (err) {
       const errorMsg =
         err.response?.data?.message ||
@@ -198,19 +254,90 @@ export default function UserDeposit({ setActiveSubMenu, user }) {
     }
   };
 
-  /*  HELPERS   */
+  /* ================= HELPERS ================= */
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
-  if(loadingPage)
-  {
-    return(
+
+  const getStatusBadge = (status) => {
+    const statusConfig = {
+      waiting: {
+        bg: "bg-yellow-200",
+        text: "text-yellow-700",
+        label: "Waiting for Payment",
+        animate: true
+      },
+      confirming: {
+        bg: "bg-blue-200",
+        text: "text-blue-700",
+        label: "Confirming",
+        animate: true
+      },
+      confirmed: {
+        bg: "bg-blue-300",
+        text: "text-blue-800",
+        label: "Confirmed",
+        animate: true
+      },
+      sending: {
+        bg: "bg-indigo-200",
+        text: "text-indigo-700",
+        label: "Sending",
+        animate: true
+      },
+      partially_paid: {
+        bg: "bg-orange-200",
+        text: "text-orange-700",
+        label: "Partially Paid",
+        animate: true
+      },
+      finished: {
+        bg: "bg-green-600",
+        text: "text-white",
+        label: "Completed",
+        animate: false
+      },
+      failed: {
+        bg: "bg-red-600",
+        text: "text-white",
+        label: "Failed",
+        animate: false
+      },
+      refunded: {
+        bg: "bg-purple-600",
+        text: "text-white",
+        label: "Refunded",
+        animate: false
+      },
+      expired: {
+        bg: "bg-gray-600",
+        text: "text-white",
+        label: "Expired",
+        animate: false
+      }
+    };
+
+    const config = statusConfig[status] || statusConfig.waiting;
+
+    return (
+      <span 
+        className={`px-3 py-1 text-sm rounded font-medium ${config.bg} ${config.text} ${
+          config.animate ? 'animate-pulse' : ''
+        }`}
+      >
+        {config.label}
+      </span>
+    );
+  };
+
+  if (loadingPage) {
+    return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-orange-50">
         <div className="w-16 h-16 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin"></div>
       </div>
-    )
+    );
   }
 
   const cryptoIcons = {
@@ -228,7 +355,13 @@ export default function UserDeposit({ setActiveSubMenu, user }) {
       <div className="p-4 sm:p-6 max-w-2xl mx-auto">
         <Button
           btnName="Back"
-          onClick={() => setActiveSubMenu("undefined")}
+          onClick={() => {
+            setActiveSubMenu("undefined");
+            setPayment(null);
+            setPaymentStatus("waiting");
+            setAmount("");
+            setEstimatedAmount(null);
+          }}
           extraCss="mb-4 px-4 py-2 rounded-lg flex items-center gap-2"
           bgColour="bg-gray-100"
           textColour="text-gray-700"
@@ -292,32 +425,78 @@ export default function UserDeposit({ setActiveSubMenu, user }) {
                 {payment.payment_id}
               </span>
             </div>
-            <div className="flex justify-between">
+            <div className="flex justify-between items-center">
               <span className="text-gray-600">Status</span>
-              <span className="px-2 py-1 bg-yellow-100 text-yellow-700 text-sm rounded">
-                {payment.payment_status}
-              </span>
+              {getStatusBadge(paymentStatus)}
             </div>
+            {payment.actually_paid && (
+              <div className="flex justify-between">
+                <span className="text-gray-600">Amount Received</span>
+                <span className="text-sm font-semibold text-green-600">
+                  {payment.actually_paid} {payment.pay_currency.toUpperCase()}
+                </span>
+              </div>
+            )}
           </div>
 
-          {/* Warning */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex gap-3">
-            <AlertCircle
-              size={20}
-              className="text-blue-600 flex-shrink-0 mt-0.5"
-            />
-            <div className="text-sm text-blue-800">
-              <p className="font-semibold mb-1">Important:</p>
-              <ul className="list-disc list-inside space-y-1">
-                <li>Send the exact amount shown above</li>
-                <li>Payment expires in 60 minutes</li>
-                <li>Funds will be credited after network confirmation</li>
-              </ul>
+          {/* Status Messages */}
+          {paymentStatus === "finished" && (
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex gap-3">
+              <CheckCircle size={20} className="text-green-600 flex-shrink-0 mt-0.5" />
+              <div className="text-sm text-green-800">
+                <p className="font-semibold mb-1">Payment Successful!</p>
+                <p>Your deposit has been confirmed and credited to your wallet.</p>
+              </div>
             </div>
-          </div>
+          )}
+
+          {paymentStatus === "failed" && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex gap-3">
+              <AlertCircle size={20} className="text-red-600 flex-shrink-0 mt-0.5" />
+              <div className="text-sm text-red-800">
+                <p className="font-semibold mb-1">Payment Failed</p>
+                <p>Your payment could not be processed. Please try again or contact support.</p>
+              </div>
+            </div>
+          )}
+
+          {paymentStatus === "expired" && (
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 flex gap-3">
+              <AlertCircle size={20} className="text-gray-600 flex-shrink-0 mt-0.5" />
+              <div className="text-sm text-gray-800">
+                <p className="font-semibold mb-1">Payment Expired</p>
+                <p>This payment request has expired. Please create a new deposit request.</p>
+              </div>
+            </div>
+          )}
+
+          {paymentStatus === "partially_paid" && (
+            <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 flex gap-3">
+              <AlertCircle size={20} className="text-orange-600 flex-shrink-0 mt-0.5" />
+              <div className="text-sm text-orange-800">
+                <p className="font-semibold mb-1">Partially Paid</p>
+                <p>We received partial payment. Please send the remaining amount to complete the transaction.</p>
+              </div>
+            </div>
+          )}
+
+          {["waiting", "confirming", "confirmed", "sending"].includes(paymentStatus) && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex gap-3">
+              <AlertCircle size={20} className="text-blue-600 flex-shrink-0 mt-0.5" />
+              <div className="text-sm text-blue-800">
+                <p className="font-semibold mb-1">Important:</p>
+                <ul className="list-disc list-inside space-y-1">
+                  <li>Send the exact amount shown above</li>
+                  <li>Payment expires in 60 minutes</li>
+                  <li>Funds will be credited after network confirmation</li>
+                  <li>Status updates automatically every minute</li>
+                </ul>
+              </div>
+            </div>
+          )}
 
           {/* Action Button */}
-          {payment.invoice_id && (
+          {payment.invoice_id && ["waiting", "confirming", "confirmed"].includes(paymentStatus) && (
             <button
               onClick={() =>
                 window.open(
@@ -328,6 +507,22 @@ export default function UserDeposit({ setActiveSubMenu, user }) {
               className="w-full bg-yellow-400 hover:bg-yellow-500 text-white font-semibold py-3 rounded-lg transition flex items-center justify-center gap-2"
             >
               Open Payment Page <ExternalLink size={18} />
+            </button>
+          )}
+
+          {paymentStatus === "finished" && (
+            <button
+              onClick={() => {
+                setActiveSubMenu("undefined");
+                setPayment(null);
+                setPaymentStatus("waiting");
+                setAmount("");
+                setEstimatedAmount(null);
+              }}
+              className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-lg transition flex items-center justify-center gap-2"
+            >
+              <CheckCircle size={20} />
+              Back to Wallet
             </button>
           )}
         </div>
@@ -402,7 +597,7 @@ export default function UserDeposit({ setActiveSubMenu, user }) {
               <button
                 key={crypto}
                 onClick={() => setSelectedCrypto(crypto)}
-                className={`p-4 rounded-lg border-2 transition  disabled:bg-gray-300 disabled:cursor-not-allowed ${
+                className={`p-4 rounded-lg border-2 transition disabled:bg-gray-300 disabled:cursor-not-allowed ${
                   selectedCrypto === crypto
                     ? "border-yellow-400 bg-yellow-50"
                     : "border-gray-200 hover:border-gray-300"
@@ -507,10 +702,7 @@ export default function UserDeposit({ setActiveSubMenu, user }) {
         {/* Info */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <div className="flex gap-3">
-            <AlertCircle
-              size={20}
-              className="text-blue-600 flex-shrink-0 mt-0.5"
-            />
+            <AlertCircle size={20} className="text-blue-600 flex-shrink-0 mt-0.5" />
             <div className="text-sm text-blue-800">
               <p className="font-semibold mb-1">How it works:</p>
               <ol className="list-decimal list-inside space-y-1">

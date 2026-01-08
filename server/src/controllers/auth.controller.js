@@ -63,9 +63,19 @@ export const registerUser = async (req, res) => {
     if (userExists) {
       return res.status(400).json({
         success: false,
-        message: "User already exists",
+        message: "User Email Already exists",
       });
     }
+
+    const phoneNumberExists = await User.findOne({ phoneNumber });
+
+    if (phoneNumberExists) {
+      return res.status(400).json({
+        success: false,
+        message: "User Phone Number Already exists",
+      });
+    }
+
 
     const hashedPassword = await bcrypt.hash(password, 10);
 

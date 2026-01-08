@@ -196,18 +196,17 @@ export const createPayment = async (req, res) => {
 export const getPaymentStatus = async (req, res) => {
   try {
     const { payment_id } = req.params;
-
+    console.log("getPaymentStatus : payment :- ", payment_id);
     const payment = await Payment.findOne({
       payment_id,
       user_id: req.userId,
     });
-
+ 
     if (!payment) {
       return res.status(404).json({ error: "Payment not found" });
     }
 
-    const response = await nowpaymentsRequest.get(`/payment/${payment_id}`);
-
+    const response = await nowpaymentsRequest.get(`/payment/${payment_id}`); 
     if (response.data.payment_status !== payment.payment_status) {
       payment.payment_status = response.data.payment_status;
       payment.actually_paid =
@@ -281,14 +280,14 @@ export const getPayments = async (req, res) => {
 // ================= TRANSACTIONS =================
 export const getTransactions = async (req, res) => {
   try {
-    const { limit = 10, page = 0, type } = req.query; 
+    const { limit = 10, page = 0, type } = req.query;
     const query = { user_id: req.userId };
-    if (type) query.type = type; 
+    if (type) query.type = type;
     const transactions = await Transaction.find(query)
       .sort({ created_at: -1 })
       .limit(Number(limit))
-      .skip(Number(page) * Number(limit)); 
-    const total = await Transaction.countDocuments(query); 
+      .skip(Number(page) * Number(limit));
+    const total = await Transaction.countDocuments(query);
     res.json({
       transactions,
       total,
