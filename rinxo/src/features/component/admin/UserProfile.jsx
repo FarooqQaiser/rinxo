@@ -9,12 +9,12 @@ import { toast } from "react-toastify";
 
 export default function UserProfile() {
   const [users, setUsers] = useState([]);
-
-  useEffect(() => {
     const fetchUsers = async () => {
       const data = await usersData();
       setUsers(data.data);
     };
+  useEffect(() => {
+    
     fetchUsers();
   }, []);
   const [formData, setFormData] = useState({
@@ -146,13 +146,13 @@ export default function UserProfile() {
   const confirmDelete = async () => {
     try {
       console.log("userToDelete: ", userToDelete);
-      const deleteData = await userDeleteData(userToDelete);
+      const deleteData = await userDeleteData(userToDelete._id);
 
       if (deleteData.success === true) {
         toast.success(deleteData.message);
 
         // Remove user from UI
-        setUsers(users.filter((u) => u._id !== userToDelete));
+        fetchUsers();
       } else {
         toast.error(deleteData.message);
       }
