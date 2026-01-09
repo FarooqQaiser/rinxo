@@ -1,43 +1,3 @@
-// import multer from "multer";
-// import path from "path";
-// import fs from "fs";
-// import { fileURLToPath } from "url";
-
-// // const uploadDir = path.join(path.resolve(), "uploads");
-// const __filename = fileURLToPath(import.meta.url);
-// const __dirname = path.dirname(__filename);
-
-// const uploadDir = path.join(__dirname, "..", "uploads", "proofs");
-
-// if (!fs.existsSync(uploadDir)) {
-//   fs.mkdirSync(uploadDir, { recursive: true });
-// }
-
-// const storage = multer.diskStorage({
-//   destination: function (req, file, cb) {
-//     cb(null, uploadDir);
-//   },
-//   filename: function (req, file, cb) {
-//     const ext = path.extname(file.originalname);
-//     cb(null, Date.now() + "-" + Math.round(Math.random() * 1e9) + ext);
-//   },
-// });
-
-// const fileFilter = (req, file, cb) => {
-//   if (file.mimetype.startsWith("image/")) {
-//     cb(null, true);
-//   } else {
-//     cb(new Error("Only image files are allowed!"), false);
-//   }
-// };
-
-// export const upload = multer({
-//   storage,
-//   fileFilter,
-//   limits: { fileSize: 2 * 1024 * 1024 }, // 2MB limit
-// });
-
-
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -58,7 +18,7 @@ const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, uploadDir);
   },
-  filename: function (req, file, cb) {
+  filename: (req, file, cb) => {
     const ext = path.extname(file.originalname);
     cb(
       null,
@@ -72,12 +32,46 @@ const fileFilter = (req, file, cb) => {
   if (file.mimetype.startsWith("image/")) {
     cb(null, true);
   } else {
-    cb(new Error("Only image files are allowed!"), false);
+    cb(
+      new multer.MulterError(
+        "LIMIT_UNEXPECTED_FILE",
+        "Only image files are allowed"
+      )
+    );
   }
 };
 
-export const upload = multer({
+const multerUpload = multer({
   storage,
   fileFilter,
-  limits: { fileSize: 2 * 1024 * 1024 }, // 2MB limit
+  limits: { fileSize: 2 * 1024 * 1024 }, // 2MB
 });
+
+export const uploadSingleImage = (fieldName) => {
+  return (req, res, next) => {
+    multerUpload.single(fieldName)(req, res, (err) => {
+      if (err instanceof multer.MulterError) {
+        if (err.code === "LIMIT_FILE_SIZE") {
+          return res.status(400).json({
+            success: false,
+            message: "Image size must be less than or equal to 2MB",
+          });
+        }
+
+        return res.status(400).json({
+          success: false,
+          message: err.message,
+        });
+      }
+
+      if (err) {
+        return res.status(400).json({
+          success: false,
+          message: err.message || "File upload failed",
+        });
+      }
+
+      next();
+    });
+  };
+};

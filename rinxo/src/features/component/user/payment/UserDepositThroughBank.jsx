@@ -40,9 +40,10 @@ export default function UserDepositThroughBank({ setActiveSubMenu }) {
         body: formData,
       });
 
-      if (!response.ok) throw new Error("Upload failed!");
+      const result = await response.json();
 
-      // const result = await response.json();
+      if (!response.ok) throw new Error(result.message || "Upload failed!");
+
       // console.log("result: ", result);
       setAmount(0);
       setBankName("");
@@ -56,7 +57,8 @@ export default function UserDepositThroughBank({ setActiveSubMenu }) {
 
       toast.success("Funds Successfully Deposited!");
     } catch (err) {
-      console.error(err);
+      // console.error("Failed to upload payment prove: ", err);
+      toast.error(err.message);
     }
   };
 
@@ -189,9 +191,9 @@ export default function UserDepositThroughBank({ setActiveSubMenu }) {
                   Enter your account number from which the funds were
                   transferred.
                 </li>
-                <li>
-                  Upload an image of your transfer receipt as proof of payment.
-                </li>
+                <li>Bank Name: "ADMIN_BANK"</li>
+                <li>Account Name: "ADMIN_ACCOUNT_NAME"</li>
+                <li>Account Number: "ADMIN_ACCOUNT_NUMBER"</li>
               </ol>
             </div>
           </div>

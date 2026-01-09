@@ -505,8 +505,14 @@ export const exportUserReport = async (req, res) => {
     const deposits = transactions.filter(
       (t) => t.type === "deposit" && t.status !== "pending"
     );
+    const bankDeposits = user.bankDeposits;
 
-    if (!withdrawals.length && !transactions.length && !payments.length) {
+    if (
+      !withdrawals.length &&
+      !transactions.length &&
+      !payments.length &&
+      bankDeposits.length
+    ) {
       return res
         .status(404)
         .json({ success: false, message: "No report data" });
@@ -677,6 +683,74 @@ export const exportUserReport = async (req, res) => {
 
       cells.forEach((cell, idx) => {
         doc.text(cell.text, dColX[dHeaders[idx].key], y, {
+          width: cell.width,
+          lineGap: 2,
+        });
+      });
+
+      y += rowHeight;
+    });
+
+    doc.addPage();
+
+    /* ==================== BANK DEPOSITS ==================== */
+
+    doc.fontSize(14).text("Bank Deposits");
+    doc.moveDown(0.5);
+
+    const bDHeaders = [
+      { key: "id", label: "ID" },
+      { key: "accountN", label: "ACCOUNT NUMBER" },
+      { key: "bankN", label: "BANK NAME" },
+      { key: "amount", label: "AMOUNT" },
+      { key: "status", label: "STATUS" },
+      { key: "date", label: "DATE" },
+    ];
+
+    // X positions (continuous)
+    const bDColX = {
+      id: 40,
+      accountN: 70,
+      bankN: 170,
+      amount: 300,
+      status: 360,
+      date: 450,
+    };
+
+    // Widths (match content)
+    const bDColW = {
+      id: 30,
+      accountN: 90,
+      bankN: 120,
+      amount: 60,
+      status: 80,
+      date: 110,
+    };
+
+    y = doc.y;
+    drawTableHeader(doc, bDHeaders, bDColX, bDColW, y);
+    y += 22;
+
+    bankDeposits.forEach((bD, i) => {
+      const cells = [
+        { text: String(i + 1), width: bDColW.id },
+        { text: bD.accountNumber, width: bDColW.accountN },
+        { text: bD.bankName, width: bDColW.bankN },
+        { text: bD.amount, width: bDColW.amount },
+        { text: bD.status, width: bDColW.status },
+        { text: new Date(bD.depositedAt).toLocaleString(), width: bDColW.date },
+      ];
+
+      const rowHeight = getRowHeight(doc, cells) + 6;
+      if (y + rowHeight > doc.page.height - 50) {
+        doc.addPage();
+        y = 50;
+        drawTableHeader(doc, bDHeaders, bDColX, bDColW, y);
+        y += 20;
+      }
+
+      cells.forEach((cell, idx) => {
+        doc.text(cell.text, bDColX[bDHeaders[idx].key], y, {
           width: cell.width,
           lineGap: 2,
         });
