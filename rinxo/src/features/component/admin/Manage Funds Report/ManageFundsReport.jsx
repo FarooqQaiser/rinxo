@@ -1,14 +1,5 @@
 import { useEffect, useState } from "react";
-import {
-  ArrowLeft,
-  Download,
-  RefreshCw,
-  Filter,
-  Search,
-  Menu,
-  X,
-} from "lucide-react";
-import DepositTable from "./DepositTable";
+import { ArrowLeft, Download, Search, Menu, X } from "lucide-react";
 import WithdrawalTable from "./WithdrawalTable";
 import PaymentsTable from "./PaymentsTable";
 import TransactionTable from "./TransactionTable";
@@ -39,12 +30,11 @@ const ManageFundsReport = ({ setShowReport, userId }) => {
     { name: "Bank Deposits", count: bankDeposits.length },
   ];
 
-
   useEffect(() => {
     // Fetch Withdrawals
     const fetchWithdrawals = async () => {
       try {
-        const response = await getUserWithdrawals({ userId }); 
+        const response = await getUserWithdrawals({ userId });
         setWithdrawals(response || []);
       } catch (err) {
         console.error("Error Fetching Withdrawals:", err);
@@ -125,8 +115,8 @@ const ManageFundsReport = ({ setShowReport, userId }) => {
     const timer = setTimeout(() => {
       setIsLoading(false);
     }, 500);
-    return () => clearTimeout(timer);
     fetchBankDeposits();
+    return () => clearTimeout(timer);
   }, [userId, isLoading]);
 
   useEffect(() => {
@@ -148,10 +138,9 @@ const ManageFundsReport = ({ setShowReport, userId }) => {
   );
 
   useEffect(() => {
-  const titles = ["Withdrawals", "Deposits", "Payments", "Transactions"];
-  setFundsText(titles[activeTab] || "");
-}, [activeTab]);
-
+    const titles = ["Withdrawals", "Deposits", "Payments", "Transactions"];
+    setFundsText(titles[activeTab] || "");
+  }, [activeTab]);
 
   const getActiveData = () => {
     switch (activeTab) {
@@ -242,14 +231,15 @@ const ManageFundsReport = ({ setShowReport, userId }) => {
 
   const handleTabChange = (index) => {
     setActiveTab(index);
-    if (window.innerWidth < 1024) { // Tailwind lg breakpoint
+    if (window.innerWidth < 1024) {
+      // Tailwind lg breakpoint
       setSidebarOpen(false);
     }
   };
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-white-50 to-orange-50">
+      <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-white-50 to-orange-50">
         <div className="w-16 h-16 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
@@ -263,16 +253,16 @@ const ManageFundsReport = ({ setShowReport, userId }) => {
           <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors shrink-0"
             >
               <Menu size={20} />
             </button>
 
             <button
               onClick={() => setShowReport(false)}
-              className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex-shrink-0"
+              className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors shrink-0"
             >
-              <ArrowLeft size={16} className="sm:w-[18px] sm:h-[18px]" />
+              <ArrowLeft size={16} className="sm:w-4.5 sm:h-4.5" />
               <span className="font-medium text-sm sm:text-base">Back</span>
             </button>
 
@@ -287,17 +277,19 @@ const ManageFundsReport = ({ setShowReport, userId }) => {
           </div>
 
           <button
-            className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 bg-yellow-400 text-gray-900 rounded-lg hover:bg-yellow-500 transition-colors font-medium text-sm flex-shrink-0"
+            className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 bg-yellow-400 text-gray-900 rounded-lg hover:bg-yellow-500 transition-colors font-medium text-sm shrink-0"
             onClick={handleExportButton}
           >
-            <Download size={16} className="sm:w-[18px] sm:h-[18px]" />
+            <Download size={16} className="sm:w-4.5 sm:h-4.5" />
             <span className="hidden sm:inline">Export</span>
           </button>
         </div>
 
         {/* Mobile Title - Shows below header on small screens */}
         <div className="sm:hidden mt-3">
-          <h1 className="text-lg font-bold text-gray-900">Financial Reports ({fundsText})</h1>
+          <h1 className="text-lg font-bold text-gray-900">
+            Financial Reports ({fundsText})
+          </h1>
           <p className="text-xs text-gray-500">Manage transactions</p>
         </div>
       </div>
@@ -321,18 +313,18 @@ const ManageFundsReport = ({ setShowReport, userId }) => {
           `}
         > */}
         <div
-  className={`
+          className={`
     bg-white border-r border-gray-200 transition-all duration-300
     fixed lg:relative inset-y-0 left-0 z-30
     ${sidebarOpen ? "w-64" : "w-0"}
   `}
->
-
-          <div className={`
+        >
+          <div
+            className={`
              h-full overflow-y-auto 
             ${sidebarOpen ? "p-4" : "p-0"}
             `}
-            >
+          >
             {/* Mobile Close Button */}
             <div className="flex justify-between items-center mb-4 lg:hidden">
               <h2 className="font-semibold text-gray-900">Menu</h2>
