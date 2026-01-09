@@ -17,8 +17,7 @@ import {
   uploadNICImages,
 } from "../controllers/user.controller.js";
 import { protect } from "../middlewares/auth.middlerware.js";
-import { upload } from "../middlewares/uploadDepositProof.middleware.js";
-import User from "../models/User.model.js";
+import { uploadSingleImage } from "../middlewares/uploadDepositProof.middleware.js";
 
 const router = express.Router();
 
@@ -43,7 +42,12 @@ router.get("/admin/export-user-report/:userId", protect, exportUserReport);
 
 // user
 router.get("/userData/:userId", protect, showSingleUser);
-router.post("/deposit", protect, upload.single("proofImage"), addBankDeposit);
+router.post(
+  "/deposit",
+  protect,
+  uploadSingleImage("proofImage"),
+  addBankDeposit
+);
 router.get("/deposits/:userId", protect, fetchUserDeposits);
 router.patch("/deposits/:userId/:depositId", protect, updateBankDepositStatus);
 
