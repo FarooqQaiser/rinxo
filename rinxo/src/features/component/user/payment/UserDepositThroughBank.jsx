@@ -10,7 +10,7 @@ export default function UserDepositThroughBank({ setActiveSubMenu }) {
   const [proofImage, setProofImage] = useState(null);
   const [preview, setPreview] = useState(null);
   const fileInputRef = useRef(null);
-
+ 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {

@@ -1,4 +1,4 @@
-export default function CryptoDepositTable({ data, formatAmount }) {
+export default function DepositTable({ data, formatAmount }) {
   return (
     <>
       {/* Desktop Table View */}

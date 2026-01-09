@@ -12,7 +12,7 @@ const ManageFundsReport = ({ setShowReport, userId }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [fundsText, setFundsText] = useState("Withdrawals");
   const [searchTerm, setSearchTerm] = useState("");
-  const [sidebarOpen, setSidebarOpen] = useState(false); // Default closed on mobile
+  const [sidebarOpen, setSidebarOpen] = useState(true); // Default closed on mobile
   const [withdrawals, setWithdrawals] = useState([]);
   const [deposits, setDeposits] = useState([]);
   const [payments, setPayments] = useState([]);
@@ -112,10 +112,10 @@ const ManageFundsReport = ({ setShowReport, userId }) => {
     fetchWithdrawals();
     fetchDepositsAndTransactions();
     fetchPayments();
+    fetchBankDeposits();
     const timer = setTimeout(() => {
       setIsLoading(false);
     }, 500);
-    fetchBankDeposits();
     return () => clearTimeout(timer);
   }, [userId, isLoading]);
 
@@ -138,7 +138,7 @@ const ManageFundsReport = ({ setShowReport, userId }) => {
   );
 
   useEffect(() => {
-    const titles = ["Withdrawals", "Deposits", "Payments", "Transactions"];
+    const titles = ["Withdrawals", "Deposits", "Payments", "Transactions","Bank Deposits"];
     setFundsText(titles[activeTab] || "");
   }, [activeTab]);
 
@@ -162,30 +162,14 @@ const ManageFundsReport = ({ setShowReport, userId }) => {
           t.payment_id.toLowerCase().includes(searchTerm.toLowerCase())
         );
       case 4:
-        return bankDeposits;
-      // .filter((bd) =>
-      //   bd.payment_id.toLowerCase().includes(searchTerm.toLowerCase())
-      // );
+        return bankDeposits
+      .filter((bd) =>
+        bd.payment_id.toLowerCase().includes(searchTerm.toLowerCase())
+      );
       default:
         return [];
     }
   };
-
-  // const getActiveDataText = () =>
-  // {
-  //     switch (activeTab) {
-  //       case 0:
-  //         return setFundsText("Withdrawals");
-  //       case 1:
-  //         return setFundsText("Deposits");
-  //       case 2:
-  //         return setFundsText("Payments");
-  //       case 3:
-  //         return setFundsText("Transactions");
-  //       default:
-  //         return "";
-  //     }
-  //   };
 
   const activeData = getActiveData();
   const totalPages = Math.ceil(activeData.length / itemsPerPage);
@@ -298,20 +282,10 @@ const ManageFundsReport = ({ setShowReport, userId }) => {
         {/* Mobile Overlay */}
         {sidebarOpen && (
           <div
-            className="fixed inset-0 bg-black bg-opacity-50 z-20 lg:hidden"
+            className="fixed inset-0 bg-[#0000002c] bg-opacity-50 z-20 lg:hidden"
             onClick={() => setSidebarOpen(false)}
           />
         )}
-
-        {/* Sidebar */}
-        {/* <div
-          className={`
-            bg-white border-r border-gray-200 transition-all duration-300 overflow-hidden
-            fixed lg:relative inset-y-0 left-0 z-30
-            ${sidebarOpen ? "w-64 sm:w-72" : "w-0"}
-            lg:w-60 lg:block
-          `}
-        > */}
         <div
           className={`
     bg-white border-r border-gray-200 transition-all duration-300

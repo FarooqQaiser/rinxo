@@ -7,11 +7,13 @@ import { getUserWithdrawals } from "../../../utils/withdrawal.utils";
 export default function ManageFunds() {
   const [users, setUsers] = useState([]);
   const [pendingWithdrawals, setPendingWithdrawals] = useState([]);
+  const [pendingDeposits, setPendingDeposits] = useState([]);
   const [userId, setUserId] = useState("");
   const [showReport, setShowReport] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [usersPerPage, setUsersPerPage] = useState(3);
   const [filterStatus, setFilterStatus] = useState("All");
+  const [depositStatus, setDepositStatus] = useState("All");
 
   const getPendingUserIds = (withdrawals) =>
     [...new Set(
@@ -21,15 +23,28 @@ export default function ManageFunds() {
         .map((w) => w.user_id.toString())
     )];
 
+    const getDepositsPending = (user) =>
+    {
+      const hasPending = user.bankDeposits
+      .flat()
+      .some((d) => d.status === "pending");
+      return hasPending ? user._id.toString() : null; 
+    }
+
   useEffect(() => {
     const fetchData = async () => {
       try {
         const { data = [] } = await usersData();
         setUsers(data);
+    
         const withdrawals = await Promise.all(
           data.map((u) => getUserWithdrawals({ userId: u._id }))
-        );
+        ); 
+        const depositsPending = await Promise.all(
+          data.map((u) => getDepositsPending(u))
+        ) 
         setPendingWithdrawals(getPendingUserIds(withdrawals));
+        setPendingDeposits(depositsPending);
       } catch (err) {
         console.error(err);
       }
@@ -41,10 +56,19 @@ export default function ManageFunds() {
   // Calculate pagination
   const indexOfLastUser = currentPage * usersPerPage;
   const indexOfFirstUser = indexOfLastUser - usersPerPage;
-  const filteredUsers =
-    filterStatus === "All"
-      ? users
-      : users.filter((u) => pendingWithdrawals.includes(u._id));
+  // const filteredUsers =
+  //   filterStatus === "All"
+  //     ? users
+  //     : users.filter((u) => pendingWithdrawals.includes(u._id));
+const filteredUsers = users.filter((u) => {
+  const hasWithdrawal = pendingWithdrawals.includes(u._id.toString());
+  const hasDeposit = pendingDeposits.includes(u._id.toString());
+
+  if (filterStatus === "pending" && !hasWithdrawal) return false;
+  if (depositStatus === "pending" && !hasDeposit) return false;
+
+  return true;
+});
 
   const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
   const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
@@ -63,7 +87,7 @@ export default function ManageFunds() {
   };
 
   const hasPendingWithdrawal = (userId) => pendingWithdrawals.includes(userId);
-
+  const hasPendingDeposit = (userId) => pendingDeposits.includes(userId);
   return (
     <div className="min-h-screen">
       {showReport ? (
@@ -79,6 +103,19 @@ export default function ManageFunds() {
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
+                className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-yellow-400 focus:outline-none"
+              >
+                <option value="All">All</option>
+                <option value="pending">Pending</option>
+              </select>
+            </div>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+              <label className="text-gray-700 font-medium text-sm sm:text-base">
+                Deposit Status
+              </label>
+              <select
+                value={depositStatus}
+                onChange={(e) => setDepositStatus(e.target.value)}
                 className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-yellow-400 focus:outline-none"
               >
                 <option value="All">All</option>
@@ -118,13 +155,20 @@ export default function ManageFunds() {
               <tbody>
                 {currentUsers.map((user, index) => (
                   <tr
-                    key={user._id}
-                    className={`border-b border-gray-100 hover:bg-gray-50 ${
-                      hasPendingWithdrawal(user._id)
-                        ? "bg-yellow-50 border-l-4 border-yellow-400"
-                        : ""
-                    }`}
-                  >
+                      key={user._id}
+                      className={`border-b border-gray-100 hover:bg-gray-50
+                        ${
+                          hasPendingWithdrawal(user._id) && hasPendingDeposit(user._id)
+                            ? "bg-yellow-200 border-l-4 border-purple-500"
+                            : hasPendingWithdrawal(user._id)
+                            ? "bg-yellow-50 border-l-4 border-yellow-400"
+                            : hasPendingDeposit(user._id)
+                            ? "bg-blue-50 border-l-4 border-blue-400"
+                            : ""
+                        }
+                      `}
+                    >
+
                     <td className="py-4 px-4 font-medium text-gray-800">
                       {indexOfFirstUser + index + 1}
                     </td>
