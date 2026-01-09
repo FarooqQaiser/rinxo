@@ -840,6 +840,88 @@ export const exportUserReport = async (req, res) => {
   }
 };
 
+// export const addBankDeposit = async (req, res) => {
+//   try {
+//     const userData = req.user;
+//     const { amount, bankName, accountNumber } = req.body;
+
+//     const user = await User.findById(userData._id);
+
+//     if (!user) {
+//       return res.status(404).json({
+//         success: false,
+//         message: `User with id: ${userData._id}, not found!`,
+//       });
+//     }
+
+//     if (!amount || !bankName || !accountNumber) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Amount, bank name and account number are required!",
+//       });
+//     }
+
+//     const uniquePaymentId = `TXN-${Date.now()}-${Math.floor(
+//       Math.random() * 10000
+//     )}`;
+//     const order_id = `DEP-${req.userId}-${Date.now()}`;
+
+//     const payment = new Payment({
+//       payment_id: uniquePaymentId,
+//       order_id,
+//       user_id: user._id,
+//       price_amount: amount,
+//       price_currency: "usd",
+//       bank_name: bankName,
+//       account_number: accountNumber,
+//       payment_status: "pending",
+//     });
+
+//     const transaction = new Transaction({
+//       user_id: user._id,
+//       payment_id: uniquePaymentId,
+//       type: "deposit",
+//       amount: amount,
+//       currency: "usd",
+//       status: "pending",
+//       description: "Bank deposit",
+//     });
+
+//     const proofImage = req.files.path.replace(/\\/g, "/"); 
+// console.log("Proof Image Path:", proofImage);
+//     // ✅ Extract relative path WITHOUT leading slash
+//     const imagePath = proofImage.includes("uploads/")
+//       ? proofImage.split("uploads/")[1]
+//       : proofImage;
+
+
+//     const deposit = {
+//       amount,
+//       payment_id: uniquePaymentId,
+//       bankName,
+//       accountNumber,
+//       proofImage: imagePath,
+//       status: "pending",
+//     };
+
+//     await payment.save();
+//     await transaction.save();
+//     user.bankDeposits.push(deposit);
+//     await user.save();
+
+//     return res.status(200).json({
+//       success: true,
+//       message: "User's fundes deposited successfully!",
+//       deposit,
+//     });
+//   } catch (err) {
+//     return res.status(500).json({
+//       success: false,
+//       message: `Server Error: ${err}`,
+//     });
+//   }
+// };
+
 export const addBankDeposit = async (req, res) => {
   try {
     const userData = req.user;
@@ -858,6 +940,13 @@ export const addBankDeposit = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: "Amount, bank name and account number are required!",
+      });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: "Proof image is required!",
       });
     }
 
@@ -881,18 +970,25 @@ export const addBankDeposit = async (req, res) => {
       user_id: user._id,
       payment_id: uniquePaymentId,
       type: "deposit",
-      amount: amount,
+      amount,
       currency: "usd",
       status: "pending",
       description: "Bank deposit",
     });
+
+
+    const proofImage = req.file.path.replace(/\\/g, "/");
+
+    const imagePath = proofImage.includes("uploads/")
+      ? proofImage.split("uploads/")[1]
+      : proofImage;
 
     const deposit = {
       amount,
       payment_id: uniquePaymentId,
       bankName,
       accountNumber,
-      proofImage: req.file.path,
+      proofImage: imagePath,
       status: "pending",
     };
 
@@ -903,7 +999,7 @@ export const addBankDeposit = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: "User's fundes deposited successfully!",
+      message: "User's funds deposited successfully!",
       deposit,
     });
   } catch (err) {
@@ -913,6 +1009,7 @@ export const addBankDeposit = async (req, res) => {
     });
   }
 };
+
 
 export const fetchUserDeposits = async (req, res) => {
   try {
@@ -941,9 +1038,8 @@ export const fetchUserDeposits = async (req, res) => {
       accountNumber: deposit.accountNumber,
       status: deposit.status,
       depositedAt: deposit.depositedAt,
-      proofImage: deposit.proofImage
-        ? `${req.protocol}://${req.get("host")}/${deposit.proofImage}`
-        : null,
+      proofImage: deposit.proofImage,
+      payment_id: deposit.payment_id,
     }));
 
     return res.status(200).json({

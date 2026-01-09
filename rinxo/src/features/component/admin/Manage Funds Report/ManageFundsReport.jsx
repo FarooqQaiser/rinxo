@@ -21,7 +21,7 @@ const ManageFundsReport = ({ setShowReport, userId }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [fundsText, setFundsText] = useState("Withdrawals");
   const [searchTerm, setSearchTerm] = useState("");
-  const [sidebarOpen, setSidebarOpen] = useState(false); // Default closed on mobile
+  const [sidebarOpen, setSidebarOpen] = useState(true); // Default closed on mobile
   const [withdrawals, setWithdrawals] = useState([]);
   const [deposits, setDeposits] = useState([]);
   const [payments, setPayments] = useState([]);
@@ -39,12 +39,11 @@ const ManageFundsReport = ({ setShowReport, userId }) => {
     { name: "Bank Deposits", count: bankDeposits.length },
   ];
 
-
   useEffect(() => {
     // Fetch Withdrawals
     const fetchWithdrawals = async () => {
       try {
-        const response = await getUserWithdrawals({ userId }); 
+        const response = await getUserWithdrawals({ userId });
         setWithdrawals(response || []);
       } catch (err) {
         console.error("Error Fetching Withdrawals:", err);
@@ -122,11 +121,11 @@ const ManageFundsReport = ({ setShowReport, userId }) => {
     fetchWithdrawals();
     fetchDepositsAndTransactions();
     fetchPayments();
+    fetchBankDeposits();
     const timer = setTimeout(() => {
       setIsLoading(false);
     }, 500);
     return () => clearTimeout(timer);
-    fetchBankDeposits();
   }, [userId, isLoading]);
 
   useEffect(() => {
@@ -148,10 +147,9 @@ const ManageFundsReport = ({ setShowReport, userId }) => {
   );
 
   useEffect(() => {
-  const titles = ["Withdrawals", "Deposits", "Payments", "Transactions"];
-  setFundsText(titles[activeTab] || "");
-}, [activeTab]);
-
+    const titles = ["Withdrawals", "Deposits", "Payments", "Transactions","Bank Deposits"];
+    setFundsText(titles[activeTab] || "");
+  }, [activeTab]);
 
   const getActiveData = () => {
     switch (activeTab) {
@@ -173,30 +171,14 @@ const ManageFundsReport = ({ setShowReport, userId }) => {
           t.payment_id.toLowerCase().includes(searchTerm.toLowerCase())
         );
       case 4:
-        return bankDeposits;
-      // .filter((bd) =>
-      //   bd.payment_id.toLowerCase().includes(searchTerm.toLowerCase())
-      // );
+        return bankDeposits
+      .filter((bd) =>
+        bd.payment_id.toLowerCase().includes(searchTerm.toLowerCase())
+      );
       default:
         return [];
     }
   };
-
-  // const getActiveDataText = () =>
-  // {
-  //     switch (activeTab) {
-  //       case 0:
-  //         return setFundsText("Withdrawals");
-  //       case 1:
-  //         return setFundsText("Deposits");
-  //       case 2:
-  //         return setFundsText("Payments");
-  //       case 3:
-  //         return setFundsText("Transactions");
-  //       default:
-  //         return "";
-  //     }
-  //   };
 
   const activeData = getActiveData();
   const totalPages = Math.ceil(activeData.length / itemsPerPage);
@@ -242,7 +224,8 @@ const ManageFundsReport = ({ setShowReport, userId }) => {
 
   const handleTabChange = (index) => {
     setActiveTab(index);
-    if (window.innerWidth < 1024) { // Tailwind lg breakpoint
+    if (window.innerWidth < 1024) {
+      // Tailwind lg breakpoint
       setSidebarOpen(false);
     }
   };
@@ -297,7 +280,9 @@ const ManageFundsReport = ({ setShowReport, userId }) => {
 
         {/* Mobile Title - Shows below header on small screens */}
         <div className="sm:hidden mt-3">
-          <h1 className="text-lg font-bold text-gray-900">Financial Reports ({fundsText})</h1>
+          <h1 className="text-lg font-bold text-gray-900">
+            Financial Reports ({fundsText})
+          </h1>
           <p className="text-xs text-gray-500">Manage transactions</p>
         </div>
       </div>
@@ -306,33 +291,23 @@ const ManageFundsReport = ({ setShowReport, userId }) => {
         {/* Mobile Overlay */}
         {sidebarOpen && (
           <div
-            className="fixed inset-0 bg-black bg-opacity-50 z-20 lg:hidden"
+            className="fixed inset-0 bg-[#0000002c] bg-opacity-50 z-20 lg:hidden"
             onClick={() => setSidebarOpen(false)}
           />
         )}
-
-        {/* Sidebar */}
-        {/* <div
-          className={`
-            bg-white border-r border-gray-200 transition-all duration-300 overflow-hidden
-            fixed lg:relative inset-y-0 left-0 z-30
-            ${sidebarOpen ? "w-64 sm:w-72" : "w-0"}
-            lg:w-60 lg:block
-          `}
-        > */}
         <div
-  className={`
+          className={`
     bg-white border-r border-gray-200 transition-all duration-300
     fixed lg:relative inset-y-0 left-0 z-30
     ${sidebarOpen ? "w-64" : "w-0"}
   `}
->
-
-          <div className={`
+        >
+          <div
+            className={`
              h-full overflow-y-auto 
             ${sidebarOpen ? "p-4" : "p-0"}
             `}
-            >
+          >
             {/* Mobile Close Button */}
             <div className="flex justify-between items-center mb-4 lg:hidden">
               <h2 className="font-semibold text-gray-900">Menu</h2>
